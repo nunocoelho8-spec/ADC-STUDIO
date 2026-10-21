@@ -1,4 +1,4 @@
-const CACHE_NAME = 'adc-studio-pwa-v2-0';
+const CACHE_NAME = 'adc-studio-pwa-v2-1';
 const APP_SHELL = ['./app.js', './index.html', './README.txt', './manifest.webmanifest', './styles.css', './assets/inter4_mark.png', './assets/inter4_mark_copper.png', './assets/demo_4.jpg', './assets/inter4_logo_original.jpeg', './assets/demo_1.jpg', './assets/demo_2.jpg', './assets/adc_mark_transparent.png', './assets/demo_3.jpg', './assets/demo_6.jpg', './assets/inter4_mark_transparent.png', './assets/adc_logo_original.jpeg', './assets/demo_overview.png', './assets/demo_5.jpg', './assets/adc_mark_copper.png', './assets/adc_mark_recolored.png', './icons/apple-touch-icon.png', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).then(()=>self.skipWaiting()));

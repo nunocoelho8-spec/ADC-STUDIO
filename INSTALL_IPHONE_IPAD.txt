@@ -1,0 +1,22 @@
+ADC Studio PWA Offline v2.0 — instalar no iPhone/iPad
+
+IMPORTANTE
+A Apple exige HTTPS para instalar uma PWA com funcionamento offline. Não basta abrir o index.html diretamente do ficheiro ZIP.
+
+PASSOS
+1. Publicar esta pasta num endereço HTTPS (por exemplo GitHub Pages, Cloudflare Pages, Netlify ou outro alojamento estático).
+2. No iPhone/iPad, abrir esse endereço no SAFARI.
+3. Abrir uma vez a ADC Studio e aguardar alguns segundos para os ficheiros ficarem guardados offline.
+4. Tocar em Partilhar.
+5. Escolher “Adicionar ao ecrã principal”.
+6. Confirmar “ADC Studio”.
+7. Abrir pelo ícone criado no ecrã principal.
+8. Depois do primeiro carregamento, desligar Wi‑Fi/dados móveis e testar: a app deve continuar a abrir e trabalhar offline.
+
+DADOS E FOTOS
+- A app guarda uma cópia no IndexedDB do próprio dispositivo, que suporta muito mais dados do que o armazenamento local antigo.
+- Usa regularmente “Exportar cópia” para guardar um backup .adcproj fora do dispositivo.
+- Não apagues os dados do Safari/site sem antes exportar uma cópia.
+
+ATUALIZAÇÕES
+Quando for publicada uma nova versão no mesmo endereço HTTPS, a ADC Studio atualiza os ficheiros da aplicação através do service worker. Os projetos locais mantêm-se no dispositivo.

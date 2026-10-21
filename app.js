@@ -141,6 +141,7 @@
     if(route.screen==='library') return renderLibrary();
     if(route.screen==='clients') return renderClients();
     if(route.screen==='settings') return renderSettings();
+    if(route.screen==='backups') return renderBackups();
     if(route.screen==='trash') return renderTrash();
     if(route.screen==='project') return renderProject();
     if(route.screen==='editor') return renderEditor();
@@ -157,17 +158,18 @@
   }
 
   function navHtml(active){
-    const items=[['projects','▣','Projetos'],['models','▤','Modelos'],['library','◇','Biblioteca'],['clients','♙','Clientes'],['settings','⚙','Definições'],['trash','⌫','Lixeira']];
+    const items=[['projects','▣','Projetos'],['models','▤','Modelos'],['library','◇','Biblioteca'],['clients','♙','Clientes'],['backups','⇄','Cópias'],['settings','⚙','Definições'],['trash','⌫','Lixeira']];
     return `<nav class="nav">${items.map(([id,ico,label])=>`<button data-nav="${id}" class="${active===id?'active':''}"><span class="nav-ico">${ico}</span><span class="label">${label}</span></button>`).join('')}</nav>`;
   }
   function shell(content,active='projects'){
-    app.innerHTML=`<div class="app-shell"><aside class="sidebar"><div class="sidebar-brand">${brandHtml(true)}</div>${navHtml(active)}<div class="sidebar-foot">ADC Studio • Protótipo v1.8<br>Funciona localmente e sem servidor.<button id="backupMini">Exportar cópia</button><button id="importMini">Importar projeto</button><button id="backWelcome">Ecrã inicial</button></div></aside><main class="main">${content}</main></div>`;
+    app.innerHTML=`<div class="app-shell"><aside class="sidebar"><div class="sidebar-brand">${brandHtml(true)}</div>${navHtml(active)}<div class="sidebar-foot">ADC Studio • PWA Offline v2.1<br>Funciona localmente e sem servidor.<button id="backupMini">Exportar cópia</button><button id="importMini">Importar projeto</button><button id="backupsMini">Cópias e transferência</button><button id="backWelcome">Ecrã inicial</button></div></aside><main class="main">${content}</main></div>`;
     qsa('[data-nav]').forEach(b=>b.onclick=()=>{
       const n=b.dataset.nav;
       go(n);
     });
     const bk=qs('#backupMini'); if(bk) bk.onclick=exportAll;
     const im=qs('#importMini'); if(im) im.onclick=()=>importInput.click();
+    const bm=qs('#backupsMini'); if(bm) bm.onclick=()=>go('backups');
     const bw=qs('#backWelcome'); if(bw) bw.onclick=()=>go('welcome');
   }
 
@@ -297,6 +299,22 @@
       data.modelDefaults={coverTagline:qs('#setCoverTag').value.trim()||'INTERIOR DESIGN | MOBILIÁRIO',service1Title:qs('#setService1Title').value.trim()||'INTERIOR\nDESIGN',service1Text:qs('#setService1Text').value.trim(),service2Title:qs('#setService2Title').value.trim()||'MOBILIÁRIO\nÀ MEDIDA',service2Text:qs('#setService2Text').value.trim(),sectionTitle:qs('#setSectionTitle').value.trim()||'Visualização 3D',rightsText:qs('#setRights').value.trim(),stripRights:qs('#setStripRights').value.trim()};
       save();toast('Definições guardadas.');renderSettings();
     });
+  }
+
+  function renderBackups(){
+    const rows=(data.projects||[]).map(p=>`<article class="backup-project-row"><div><b>${escapeHtml(p.name)}</b><span>${escapeHtml(p.client||'Sem cliente')} • ${escapeHtml(p.location||'')}</span></div><button class="btn small" data-backup-project="${p.id}">Exportar projeto</button></article>`).join('');
+    const content=`${moduleHeader('Cópias e transferência','Cada dispositivo é independente. Usa ficheiros .adcproj apenas quando quiseres mover ou proteger projetos.')}
+      <section class="backup-hero"><div><div class="auto-kicker">OFFLINE • SEM SERVIDOR</div><h2>Os dados ficam neste dispositivo.</h2><p>PC, Android, iPhone e iPad podem usar a mesma ADC Studio sem estarem ligados entre si. Exportar e importar é sempre manual.</p></div><div class="backup-badge"><strong>${data.projects.length}</strong><span>projetos locais</span></div></section>
+      <section class="backup-grid">
+        <article class="settings-card backup-card"><h2>Cópia completa</h2><p>Guarda todos os projetos, fotografias, logótipos e definições deste dispositivo num único ficheiro.</p><button class="btn primary" id="backupAllNow">Exportar tudo</button><button class="btn" id="restoreAllNow">Restaurar cópia</button><small>No iPhone/iPad, quando aparecer a folha de partilha, escolhe <b>Guardar em Ficheiros</b> e podes usar o iCloud Drive.</small></article>
+        <article class="settings-card backup-card"><h2>Transferir um projeto</h2><p>Ideal para passar só um projeto do iPhone para o iPad ou de um equipamento para outro.</p><button class="btn primary" id="importProjectNow">Importar projeto</button><small>Se o projeto já existir, a ADC Studio pergunta se queres substituir ou criar uma cópia.</small></article>
+      </section>
+      <section class="settings-card backup-list-card"><div class="settings-card-head"><div><h2>Exportar projeto individual</h2><p>Escolhe apenas o projeto que queres guardar ou transferir.</p></div></div><div class="backup-project-list">${rows||'<div class="empty">Ainda não existem projetos.</div>'}</div></section>`;
+    shell(content,'backups');
+    qs('#backupAllNow')?.addEventListener('click',()=>exportAll());
+    qs('#restoreAllNow')?.addEventListener('click',()=>importInput.click());
+    qs('#importProjectNow')?.addEventListener('click',()=>importInput.click());
+    qsa('[data-backup-project]').forEach(b=>b.onclick=()=>{const p=data.projects.find(x=>x.id===b.dataset.backupProject);if(p)exportProject(p);});
   }
 
   function renderLibrary(){
@@ -936,14 +954,52 @@
     const pdf=buildPdf(jpegs),blob=new Blob([pdf],{type:'application/pdf'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${safeName(p.name)}_ADC_Studio.pdf`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500);
   }
 
-  function exportProject(p){download(`${safeName(p.name)}.adcproj`,JSON.stringify({kind:'adc-studio-project',version:15,project:p},null,2),'application/json');}
-  function exportAll(){download(`ADC_Studio_backup_${new Date().toISOString().slice(0,10)}.adcproj`,JSON.stringify({kind:'adc-studio-backup',version:15,data},null,2),'application/json');}
+  async function saveOrShareAdcFile(filename,payload){
+    const text=JSON.stringify(payload,null,2); const type='application/json';
+    try{
+      const file=new File([text],filename,{type});
+      if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+        await navigator.share({files:[file],title:filename,text:'ADC Studio'}); return true;
+      }
+    }catch(e){ if(e?.name==='AbortError') return false; }
+    download(filename,text,type); return true;
+  }
+  async function exportProject(p){return saveOrShareAdcFile(`${safeName(p.name)}.adcproj`,{kind:'adc-studio-project',version:21,exportedAt:new Date().toISOString(),project:p});}
+  async function exportAll(){return saveOrShareAdcFile(`ADC_Studio_backup_${new Date().toISOString().slice(0,10)}.adcproj`,{kind:'adc-studio-backup',version:21,exportedAt:new Date().toISOString(),data});}
   function downloadProjectImages(p){if(!p.photos.length)return toast('Este projeto ainda não tem fotografias.');p.photos.forEach((ph,i)=>{const a=document.createElement('a');a.href=ph.data;a.download=`${safeName(p.name)}_${String(i+1).padStart(2,'0')}.jpg`;document.body.appendChild(a);a.click();a.remove();});}
   function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
   function safeName(s){return(s||'projeto').replace(/[^a-z0-9áàâãéêíóôõúç _-]/gi,'').trim().replace(/\s+/g,'_');}
   async function shareProject(p){try{if(navigator.share){await navigator.share({title:`ADC Studio — ${p.name}`,text:`Projeto ${p.name} — ${p.client||''}`});}else toast('A partilha direta não está disponível neste navegador.');}catch(e){}}
 
-  importInput.onchange=async()=>{const f=importInput.files[0];if(!f)return;try{const j=JSON.parse(await f.text());if((j.kind==='adc-studio-project'||j.kind==='adc-by-inter4-project')&&j.project){const p=normalize({projects:[j.project]}).projects[0];p.id=uid();data.projects.unshift(p);save();toast('Projeto importado.');go('project',p.id,'overview');}else if((j.kind==='adc-studio-backup'||j.kind==='adc-by-inter4-backup')&&j.data){if(confirm('Substituir os dados atuais pelo backup?')){data=normalize(j.data);save();go('projects');toast('Backup restaurado.');}}else toast('Ficheiro não reconhecido.');}catch(e){toast('Não foi possível importar o ficheiro.');}};
+  function importProjectDecision(imported){
+    return new Promise(resolve=>{
+      const same=data.projects.find(p=>p.id===imported.id||((p.name||'').trim().toLowerCase()===(imported.name||'').trim().toLowerCase()&&(p.client||'').trim().toLowerCase()===(imported.client||'').trim().toLowerCase()));
+      if(!same)return resolve({action:'new'});
+      modal(`<div class="auto-modal-head"><div><div class="auto-kicker">PROJETO JÁ EXISTE</div><h3>${escapeHtml(imported.name||'Projeto')}</h3><p>Já existe um projeto com o mesmo nome/cliente neste dispositivo.</p></div></div><div class="duplicate-choice"><button class="btn primary" id="dupReplace">Substituir existente</button><button class="btn" id="dupCopy">Criar uma cópia</button><button class="btn" data-close id="dupCancel">Cancelar</button></div>`);
+      qs('#dupReplace').onclick=()=>{closeModal();resolve({action:'replace',same});};
+      qs('#dupCopy').onclick=()=>{closeModal();resolve({action:'copy'});};
+      qs('#dupCancel').onclick=()=>resolve({action:'cancel'});
+    });
+  }
+
+  importInput.onchange=async()=>{
+    const f=importInput.files[0];if(!f)return;
+    try{
+      const j=JSON.parse(await f.text());
+      if((j.kind==='adc-studio-project'||j.kind==='adc-by-inter4-project')&&j.project){
+        const imported=normalize({projects:[j.project]}).projects[0];
+        const decision=await importProjectDecision(imported);
+        if(decision.action==='cancel'){importInput.value='';return;}
+        if(decision.action==='replace'&&decision.same){imported.id=decision.same.id;const i=data.projects.findIndex(p=>p.id===decision.same.id);data.projects[i]=imported;save();toast('Projeto substituído.');go('project',imported.id,'overview');}
+        else {imported.id=uid();if(decision.action==='copy')imported.name=`${imported.name} — cópia`;data.projects.unshift(imported);save();toast(decision.action==='copy'?'Cópia do projeto importada.':'Projeto importado.');go('project',imported.id,'overview');}
+      }else if((j.kind==='adc-studio-backup'||j.kind==='adc-by-inter4-backup')&&j.data){
+        modal(`<div class="auto-modal-head"><div><div class="auto-kicker">RESTAURAR CÓPIA COMPLETA</div><h3>Substituir dados deste dispositivo?</h3><p>Esta ação substitui todos os projetos e definições locais pelos dados da cópia escolhida.</p></div></div><div class="modal-actions"><button class="btn" data-close>Cancelar</button><button class="btn danger" id="restoreBackupConfirm">Restaurar cópia</button></div>`);
+        qs('#restoreBackupConfirm').onclick=()=>{data=normalize(j.data);save();closeModal();go('projects');toast('Cópia restaurada.');};
+      }else toast('Ficheiro não reconhecido.');
+    }catch(e){console.error(e);toast('Não foi possível importar o ficheiro.');}
+    finally{importInput.value='';}
+  };
+
   window.addEventListener('afterprint',()=>qs('#printRoot')?.remove());
   async function bootstrap(){
     app.innerHTML='<div style="font-family:system-ui;padding:32px;color:#2d4149">A carregar ADC Studio…</div>';
@@ -956,6 +1012,4 @@
   bootstrap();
 })();
 
-// ADC Studio prototype v1.5 — ficha do projeto + dados profissionais do PDF
-
-// ADC Studio PWA Offline v2.0 — IndexedDB + service worker
+// ADC Studio PWA Offline v2.1 — local por dispositivo + transferências manuais
