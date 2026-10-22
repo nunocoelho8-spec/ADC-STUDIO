@@ -120,7 +120,7 @@
 .official-brand-by{display:flex;align-items:center;gap:5px;margin-top:1px;margin-left:1px}
 .official-brand-by span{font-size:6px;color:#687177}
 .official-brand-by img{width:53px;height:18px;object-fit:contain}
-.official-brand-corner{position:absolute;right:4.2%;top:3.4%;z-index:3;transform:scale(1.08);transform-origin:top right}
+.official-brand-corner{position:absolute;right:5.1%;top:4.6%;z-index:8;transform:scale(1.04);transform-origin:top right;padding:10px 12px 8px;background:rgba(216,216,216,.96);border-radius:10px}
 .official-brand-center{position:relative;left:auto;top:auto;z-index:3;transform:none;align-items:center;text-align:center;margin-bottom:46px}.official-brand-center .official-brand-main{gap:10px}.official-brand-center .official-brand-main img{width:92px;height:76px}.official-brand-center .official-brand-main span{font-size:50px;letter-spacing:-1.5px}.official-brand-center .official-brand-by{gap:9px;margin-top:7px}.official-brand-center .official-brand-by span{font-size:13px}.official-brand-center .official-brand-by img{width:155px;height:56px}
 .official-brand-contact .official-brand-main img{width:78px;height:64px}.official-brand-contact .official-brand-main span{font-size:40px}.official-brand-contact .official-brand-by span{font-size:11px}.official-brand-contact .official-brand-by img{width:125px;height:44px}
 
@@ -138,16 +138,16 @@
 .official-services-grid p{font-size:13px;line-height:1.55;margin:0;max-width:280px;color:#4e5960}
 
 .official-brief-date{position:absolute;left:15%;top:22%;font-size:9px;color:#49555b}
-.official-brief-left{position:absolute;left:15%;top:27%;width:24%;color:#2d4149}
-.official-brief-left small{font-size:9px;color:#4e5960}.official-brief-left h2{font-size:25px;line-height:1.05;margin:11px 0 6px}.official-brief-left h3{font-size:22px;line-height:1.05;margin:4px 0;font-weight:700}
+.official-brief-left{position:absolute;left:15%;top:26.5%;width:26%;color:#2d4149;display:flex;flex-direction:column;gap:8px}
+.official-brief-left small{font-size:9px;color:#4e5960;margin:0}.official-brief-left h2,.official-brief-left h3{margin:0;word-break:break-word;overflow-wrap:anywhere}.official-brief-client{font-size:24px;line-height:1.18}.official-brief-type{font-size:20px;line-height:1.18;font-weight:700}.official-brief-location{font-size:19px;line-height:1.18;font-weight:700;color:#455159}
 .official-brief-right{position:absolute;left:47%;right:13%;top:30%;font-size:13px;line-height:1.6;color:#445057}
-.official-brief-right p{margin:0 0 25px}.official-brief-right b{display:block;margin-bottom:8px;color:#2d4149}.official-brief-right ul{margin:0;padding:0;list-style:none}.official-brief-right li:before{content:'- ';}.official-brief-right li{margin:3px 0}
+.official-brief-right p{margin:0 0 25px}.official-brief-right b{display:block;margin-bottom:8px;color:#2d4149}.official-brief-right ul{margin:0;padding:0;list-style:none}.official-brief-right li:before{content:'- ';}.official-brief-right li{margin:4px 0 8px}
 
 .official-section h2{position:absolute;left:0;right:0;top:46%;text-align:center;font-size:26px;margin:0;color:#2d4149}
 .official-rights{position:absolute;left:0;right:0;bottom:6%;text-align:center;font-size:8px;letter-spacing:.25px;color:#4e5960}
 .official-full img{position:absolute;left:3.5%;top:4.5%;width:93%;height:91%;object-fit:cover}
 .official-pair-left{position:absolute;left:3.5%;top:4.5%;bottom:4.5%;width:46%;overflow:hidden}.official-pair-left img{width:100%;height:100%;object-fit:cover}
-.official-pair-right{position:absolute;left:56.8%;top:13%;width:28.8%;height:74%;overflow:hidden}.official-pair-right img{width:100%;height:100%;object-fit:cover}
+.official-pair-right{position:absolute;left:56.8%;top:16%;width:27.5%;height:69%;overflow:hidden}.official-pair-right img{width:100%;height:100%;object-fit:cover}
 .official-strip-grid{position:absolute;left:3.5%;right:3.5%;top:36.5%;height:37%;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px;overflow:hidden}
 .official-strip-grid img{width:100%;height:100%;object-fit:cover;min-width:0}
 .official-contact-brand{position:absolute;left:14%;top:37%}
