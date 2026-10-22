@@ -929,10 +929,12 @@
     if(pg.layout==='officialContact'){ctx.fillStyle='#d8d8d8';ctx.fillRect(0,0,1600,900);if(adcImg)ctx.drawImage(adcImg,235,315,190,155);ctx.fillStyle='#2d4149';ctx.font='300 70px Arial';ctx.fillText('Studio',445,415);ctx.fillStyle='#596168';ctx.font='22px Arial';ctx.fillText('by',245,510);if(inter4Img)ctx.drawImage(inter4Img,300,455,330,120);ctx.fillStyle='#465159';ctx.font='24px Arial';let yy=365;for(const line of [co.email,co.phone,co.address,co.website].filter(Boolean)){ctx.fillText(line,760,yy);yy+=42;}const drawP=(name,role,phone,x)=>{let y=560;if(name){ctx.fillStyle='#2d4149';ctx.font='700 25px Arial';ctx.fillText(name,x,y);y+=36;}ctx.fillStyle='#465159';ctx.font='21px Arial';if(role){ctx.fillText(role,x,y);y+=34;}if(phone)ctx.fillText(phone,x,y);};drawP(co.contact1Name,co.contact1Role,co.contact1Phone,760);drawP(co.contact2Name,co.contact2Role,co.contact2Phone,1110);return c;}
     ctx.save();ctx.scale(1,.9);
     const drawHeaderTitle=(txt)=>{
+      // v2.7: nos modelos alternativos o título começa SEMPRE abaixo da zona do logótipo.
+      // O ADC Oficial usa rotinas próprias acima e não é afetado.
       ctx.fillStyle=ink;ctx.font='600 34px Arial';
-      const y2=wrapCanvasTextReturn(ctx,txt||'',80,92,930,40);
+      const y2=wrapCanvasTextReturn(ctx,txt||'',80,190,1180,40);
       ctx.fillStyle=accent;ctx.fillRect(80,y2+14,72,4);
-      return Math.max(170,y2+45);
+      return Math.max(255,y2+52);
     };
     if(pg.layout==='cover'){
       pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'cover');
@@ -943,12 +945,12 @@
       ctx.fillStyle=muted;ctx.font='14px Arial';ctx.fillText('DESIGN  •  MOBILIÁRIO  •  PESSOAS',82,920);
     }else if(pg.layout==='brief'){
       ctx.fillStyle=soft;ctx.fillRect(0,0,520,1000);pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'header');
-      ctx.fillStyle=muted;ctx.font='16px Arial';ctx.fillText('CLIENTE',82,255);
-      ctx.fillStyle=ink;ctx.font='700 40px Arial';let ly=wrapCanvasTextReturn(ctx,p.client||'Projeto',82,320,350,47)+60;
-      ctx.font='700 22px Arial';ly=wrapCanvasTextReturn(ctx,p.type||'Interiores',82,ly,350,30)+42;
-      ctx.fillStyle=muted;ctx.font='19px Arial';wrapCanvasText(ctx,p.location||'',82,ly,350,28);
-      ctx.fillStyle=muted;ctx.font='16px Arial';ctx.fillText('PONTOS PRINCIPAIS',615,260);
-      ctx.fillStyle=ink;ctx.font='700 38px Arial';let ry=wrapCanvasTextReturn(ctx,pg.title||p.presentationTitle||p.name,615,325,730,46)+52;
+      ctx.fillStyle=muted;ctx.font='16px Arial';ctx.fillText('CLIENTE',82,285);
+      ctx.fillStyle=ink;ctx.font='700 40px Arial';let ly=wrapCanvasTextReturn(ctx,p.client||'Projeto',82,350,350,50)+72;
+      ctx.font='700 22px Arial';ly=wrapCanvasTextReturn(ctx,p.type||'Interiores',82,ly,350,32)+48;
+      ctx.fillStyle=muted;ctx.font='19px Arial';wrapCanvasText(ctx,p.location||'',82,ly,350,30);
+      ctx.fillStyle=muted;ctx.font='16px Arial';ctx.fillText('PONTOS PRINCIPAIS',615,285);
+      ctx.fillStyle=ink;ctx.font='700 38px Arial';let ry=wrapCanvasTextReturn(ctx,pg.title||p.presentationTitle||p.name,615,350,730,48)+60;
       ctx.fillStyle=muted;ctx.font='20px Arial';ry=wrapCanvasTextReturn(ctx,pg.subtitle||p.presentationConcept||'',615,ry,760,30)+48;
       ctx.fillStyle=ink;ctx.font='700 20px Arial';for(const point of (pg.points||p.presentationPoints||[])){ctx.fillStyle=accent;ctx.beginPath();ctx.arc(625,ry-7,5,0,Math.PI*2);ctx.fill();ctx.fillStyle=ink;ry=wrapCanvasTextReturn(ctx,point,650,ry,720,29)+19;}
     }else if(pg.layout==='section'){
