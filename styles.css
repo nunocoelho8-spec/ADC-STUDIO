@@ -233,3 +233,57 @@
 }
 .official-full img{left:4.5%;top:5.5%;width:91%;height:89%;}
 .official-pair-left,.official-pair-right,.single-frame,.slide-grid2,.slide-grid3,.slide-grid4,.slide-portrait2,.slide-mixed{overflow:visible;}
+
+
+/* v2.6 — Modelos alternativos redefinidos: zonas seguras para marca, títulos e nomes */
+.slide:not(.official-cover):not(.official-light):not(.official-full){--alt-header-h:15%;}
+.slide .brand-mini.header-brand{
+  right:4.5%;top:3.2%;transform:scale(.88);transform-origin:top right;
+  padding:3px 5px;border-radius:5px;background:color-mix(in srgb,var(--slide-bg,#f8f5f0) 94%,transparent);
+  max-width:24%;
+}
+.slide .slide-title{
+  left:5%;top:4.2%;max-width:50%;font-size:20px;line-height:1.15;
+  white-space:normal;overflow-wrap:anywhere;word-break:normal;
+}
+.standard-slide .single-frame,.standard-slide .slide-grid2,.standard-slide .slide-grid3,.standard-slide .slide-grid4,.standard-slide .slide-portrait2,.standard-slide .slide-mixed{
+  top:17%;bottom:6%;
+}
+.cover-slide .brand-mini.cover-brand,.text-slide .brand-mini.cover-brand,.contact-slide .brand-mini.cover-brand{left:5%;top:4%;transform:scale(.9);transform-origin:top left;}
+.cover-slide .title-block{left:8%;bottom:17%;max-width:38%;display:flex;flex-direction:column;gap:5px}
+.cover-slide .title-block h2{font-size:31px;line-height:1.12;margin:4px 0;overflow-wrap:anywhere}
+.cover-slide .title-block p{margin:0;line-height:1.45}
+
+.brief-slide .brief-left{padding:19% 5.5% 8%;display:flex;flex-direction:column;align-items:flex-start}
+.brief-slide .brief-left h3{font-size:25px;line-height:1.15;margin:0 0 26px;overflow-wrap:anywhere;word-break:normal;max-width:100%}
+.brief-slide .brief-meta{display:flex;flex-direction:column;gap:8px;width:100%}
+.brief-slide .brief-right{top:22%;bottom:8%}
+.brief-slide .brief-right h2{font-size:28px;line-height:1.14;margin:0 0 15px;overflow-wrap:anywhere}
+.brief-slide .brief-right p{margin-bottom:18px;line-height:1.55}
+.brief-slide .brief-right ul{gap:8px}
+
+/* ADC Signature — quente e equilibrado */
+.slide.theme-warm .brand-mini.header-brand{background:rgba(248,245,240,.96)}
+.slide.theme-warm .slide-title{font-weight:650}
+
+/* Editorial Interior — marca discreta, título de revista sem colisões */
+.slide.theme-editorial .brand-mini.header-brand{transform:scale(.78);opacity:.82;background:rgba(244,241,234,.96)}
+.slide.theme-editorial .slide-title{max-width:54%;font-size:22px;line-height:1.12;top:4%}
+.slide.theme-editorial .single-frame,.slide.theme-editorial .slide-grid2,.slide.theme-editorial .slide-grid3,.slide.theme-editorial .slide-grid4,.slide.theme-editorial .slide-portrait2,.slide.theme-editorial .slide-mixed{top:17.5%}
+
+/* Galeria Premium — imagem primeiro, títulos e marca mínimos */
+.slide.theme-gallery .brand-mini.header-brand{right:3.5%;top:3%;transform:scale(.70);opacity:.72;background:rgba(255,255,255,.96)}
+.slide.theme-gallery .slide-title{left:3.8%;top:3.8%;max-width:50%;font-size:14px;line-height:1.2;letter-spacing:1.1px}
+.slide.theme-gallery .single-frame,.slide.theme-gallery .slide-grid2,.slide.theme-gallery .slide-grid3,.slide.theme-gallery .slide-grid4,.slide.theme-gallery .slide-mixed,.slide.theme-gallery .slide-portrait2{top:13.5%;bottom:4%;left:3.2%;right:3.2%}
+
+/* Arquitetura — cabeçalho técnico reservado */
+.slide.theme-architectural .brand-mini.header-brand{right:4.5%;top:3.2%;transform:scale(.76);background:#fff}
+.slide.theme-architectural .slide-title{left:5%;top:4.1%;max-width:52%;font-size:16px;line-height:1.2;letter-spacing:1.2px}
+.slide.theme-architectural .single-frame,.slide.theme-architectural .slide-grid2,.slide.theme-architectural .slide-grid3,.slide.theme-architectural .slide-grid4,.slide.theme-architectural .slide-portrait2,.slide.theme-architectural .slide-mixed{top:15.5%}
+
+@media(max-width:700px){
+  .slide .brand-mini.header-brand{transform:scale(.72)}
+  .slide .slide-title{font-size:17px;max-width:52%}
+  .brief-slide .brief-left h3{font-size:21px;margin-bottom:18px}
+  .brief-slide .brief-right h2{font-size:23px}
+}

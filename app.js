@@ -81,9 +81,13 @@
       p.coverAsset=p.coverAsset||demoAssets[i%demoAssets.length];
       p.status=p.status||'Em desenvolvimento';
       p.notes=p.notes||'';
-      if(!p.presentationTheme||p.presentationTheme==='warm')p.presentationTheme='official';
-      if(!p.presentationPreset||p.presentationPreset==='signature')p.presentationPreset='official';
+      p.presentationTheme=p.presentationTheme||'official';
+      p.presentationPreset=p.presentationPreset||'official';
       p.presentationTemplate=p.presentationTemplate||'official';
+      // v2.6: preserva o modelo escolhido. Converte apenas nomes antigos de template.
+      if(p.presentationPreset==='signature'&&p.presentationTemplate==='premium')p.presentationTemplate='signature';
+      if(p.presentationPreset==='gallery'&&p.presentationTemplate==='minimal')p.presentationTemplate='gallery';
+      if(p.presentationPreset==='architectural'&&p.presentationTemplate==='minimal')p.presentationTemplate='architectural';
       if(p.presentationPreset==='official'){p.presentationTemplate='official';p.presentationTheme='official';}
       p.presentationDensity=p.presentationDensity||'balanced';
       p.presentationTitle=p.presentationTitle||p.name||'Projeto';
@@ -195,11 +199,11 @@
   function renderModels(){
     const presets=[
       {id:'official',name:'ADC Oficial',theme:'official',desc:'Modelo oficial aprovado da ADC Studio: capa institucional, ficha do cliente, Visualização 3D, imagens em grande formato, composições editoriais, mosaico final e contactos.',cls:'preset-official'},
-      {id:'signature',name:'ADC Signature',theme:'warm',desc:'Modelo alternativo elegante e equilibrado, pensado para apresentação ao cliente.',cls:'preset-signature'},
-      {id:'editorial',name:'Editorial Interior',theme:'editorial',desc:'Composição inspirada em revistas de interiores, com ritmo visual mais editorial.',cls:'preset-editorial'},
-      {id:'gallery',name:'Galeria Premium',theme:'gallery',desc:'Fotografias em grande destaque e pouco texto. Ideal para renders e projetos muito visuais.',cls:'preset-gallery'},
-      {id:'architectural',name:'Arquitetura',theme:'architectural',desc:'Visual claro, técnico e minimalista para plantas, levantamentos e apresentações limpas.',cls:'preset-architectural'},
-      {id:'catalog',name:'Catálogo Cliente',theme:'warm',desc:'Mais imagens por página para apresentações compactas e objetivas.',cls:'preset-catalog'}
+      {id:'signature',name:'ADC Signature',theme:'warm',desc:'Apresentação elegante e quente: capa limpa, ficha organizada e composições equilibradas.',cls:'preset-signature'},
+      {id:'editorial',name:'Editorial Interior',theme:'editorial',desc:'Estilo de revista: tipografia editorial, ritmo visual e composições com 2–3 imagens.',cls:'preset-editorial'},
+      {id:'gallery',name:'Galeria Premium',theme:'gallery',desc:'Máximo destaque à imagem: páginas muito limpas, títulos discretos e uma imagem principal por página.',cls:'preset-gallery'},
+      {id:'architectural',name:'Arquitetura',theme:'architectural',desc:'Modelo técnico e minimalista: ideal para plantas, cotas, levantamentos e vistas de projeto.',cls:'preset-architectural'},
+      {id:'catalog',name:'Catálogo Cliente',theme:'warm',desc:'Formato compacto e objetivo: mais imagens por página sem perder margens ou legibilidade.',cls:'preset-catalog'}
     ];
     const projectOptions=data.projects.map(p=>`<option value="${p.id}">${escapeHtml(p.name)}${p.client?` — ${escapeHtml(p.client)}`:''}</option>`).join('');
     const cards=presets.map(pr=>`<article class="model-card ${pr.id==='official'?'official-model-card':''}"><div class="preset-hero ${pr.cls}"><i></i><i></i><i></i><i></i><i></i></div><div class="model-copy"><div class="model-top"><h3>${pr.name}${pr.id==='official'?'<em>OFICIAL</em>':''}</h3><span>${themeInfo(pr.theme).label}</span></div><p>${pr.desc}</p><button class="btn primary small" data-apply-model="${pr.id}" data-theme="${pr.theme}">Aplicar ao projeto</button></div></article>`).join('');
@@ -212,7 +216,7 @@
       const pid=qs('#modelProjectSelect')?.value; const p=data.projects.find(x=>x.id===pid);
       if(!p) return toast('Cria ou seleciona primeiro um projeto.');
       p.presentationPreset=b.dataset.applyModel; p.presentationTheme=b.dataset.theme;
-      p.presentationTemplate=b.dataset.applyModel==='official'?'official':(b.dataset.applyModel==='gallery'||b.dataset.applyModel==='architectural'?'minimal':b.dataset.applyModel==='signature'?'premium':b.dataset.applyModel);
+      p.presentationTemplate=b.dataset.applyModel==='official'?'official':b.dataset.applyModel;
       save(); toast(`${b.closest('.model-card').querySelector('h3').childNodes[0].textContent.trim()} aplicado a ${p.name}.`);
       setTimeout(()=>go('project',p.id,'presentation'),450);
     });
@@ -428,7 +432,7 @@
   function presentationHtml(p){
     const pg=p.pages[0];
     const selectedCount=p.photos.filter(ph=>ph.includeInPresentation!==false).length;
-    const modelLabel=({official:'ADC Oficial',premium:'ADC Premium',minimal:'Minimal Claro',editorial:'Editorial',catalog:'Catálogo Visual'})[p.presentationTemplate]||'ADC Oficial';
+    const modelLabel=({official:'ADC Oficial',signature:'ADC Signature',editorial:'Editorial Interior',gallery:'Galeria Premium',architectural:'Arquitetura',catalog:'Catálogo Cliente',premium:'ADC Signature',minimal:'Minimal Claro'})[p.presentationTemplate]||'ADC Oficial';
     const visualTheme=themeInfo(p.presentationTheme||'official').label;
     const presetLabel=({official:'ADC Oficial',signature:'ADC Signature',editorial:'Editorial Interior',gallery:'Galeria Premium',architectural:'Arquitetura',catalog:'Catálogo Cliente'})[p.presentationPreset]||'ADC Oficial';
     const densityLabel=({compact:'Compacta',balanced:'Equilibrada',detailed:'Detalhada'})[p.presentationDensity]||'Equilibrada';
@@ -731,10 +735,11 @@
       <div class="auto-subtitle">Modelos prontos</div>
       <div class="preset-grid preset-grid-v15">
         <button class="preset-card official-preset ${currentPreset==='official'?'selected':''}" data-preset="official" data-template-preset="official" data-theme-preset="official"><div class="preset-hero preset-official"><i></i><i></i><i></i><i></i><i></i></div><b>ADC Oficial <em>OFICIAL</em></b><small>Modelo aprovado: igual à apresentação de referência</small></button>
-        <button class="preset-card ${currentPreset==='signature'?'selected':''}" data-preset="signature" data-template-preset="premium" data-theme-preset="warm"><div class="preset-hero preset-signature"><i></i><i></i><i></i></div><b>ADC Signature</b><small>Alternativa equilibrada</small></button>
+        <button class="preset-card ${currentPreset==='signature'?'selected':''}" data-preset="signature" data-template-preset="signature" data-theme-preset="warm"><div class="preset-hero preset-signature"><i></i><i></i><i></i></div><b>ADC Signature</b><small>Alternativa equilibrada</small></button>
         <button class="preset-card ${currentPreset==='editorial'?'selected':''}" data-preset="editorial" data-template-preset="editorial" data-theme-preset="editorial"><div class="preset-hero preset-editorial"><i></i><i></i><i></i></div><b>Editorial Interior</b><small>Visual de revista premium</small></button>
-        <button class="preset-card ${currentPreset==='gallery'?'selected':''}" data-preset="gallery" data-template-preset="minimal" data-theme-preset="gallery"><div class="preset-hero preset-gallery"><i></i><i></i><i></i></div><b>Galeria Premium</b><small>Máximo destaque às fotografias</small></button>
-        <button class="preset-card ${currentPreset==='architectural'?'selected':''}" data-preset="architectural" data-template-preset="minimal" data-theme-preset="architectural"><div class="preset-hero preset-architectural"><i></i><i></i><i></i></div><b>Arquitetura</b><small>Limpo, claro e técnico</small></button>
+        <button class="preset-card ${currentPreset==='gallery'?'selected':''}" data-preset="gallery" data-template-preset="gallery" data-theme-preset="gallery"><div class="preset-hero preset-gallery"><i></i><i></i><i></i></div><b>Galeria Premium</b><small>Máximo destaque às fotografias</small></button>
+        <button class="preset-card ${currentPreset==='architectural'?'selected':''}" data-preset="architectural" data-template-preset="architectural" data-theme-preset="architectural"><div class="preset-hero preset-architectural"><i></i><i></i><i></i></div><b>Arquitetura</b><small>Limpo, claro e técnico</small></button>
+        <button class="preset-card ${currentPreset==='catalog'?'selected':''}" data-preset="catalog" data-template-preset="catalog" data-theme-preset="warm"><div class="preset-hero preset-catalog"><i></i><i></i><i></i><i></i></div><b>Catálogo Cliente</b><small>Compacto e objetivo</small></button>
       </div>
       <div class="auto-subtitle">Quantidade de detalhe</div>
       <div class="density-grid">
@@ -770,40 +775,59 @@
   function smartPageFromList(list,room,template,optimize=true,density='balanced'){
     if(!list.length)return null;
     const title=room==='Projeto'?'Visualização':room;
+    const make=(layout,take)=>({id:uid(),layout,title,photoId:take[0]?.id||null,photo2Id:take[1]?.id||null,photo3Id:take[2]?.id||null,photo4Id:take[3]?.id||null});
+    const one=()=>{const a=list.shift();return{id:uid(),layout:'one',title,photoId:a?.id||null,fit:'contain'};};
+    const two=()=>make('two',list.splice(0,Math.min(2,list.length)));
+    const portraits=()=>list.filter(x=>photoShape(x)==='portrait');
+
+    // Todos os modelos alternativos usam imagem completa (contain). A diferença está no ritmo.
     if(!optimize){
-      const target=density==='compact'?4:density==='detailed'?2:(template==='catalog'?4:3);
-      const max=Math.min(target,list.length),take=list.splice(0,max);
-      const layout=take.length===1?'one':take.length===2?'two':take.length===3?'three':'four';
-      return {id:uid(),layout,title,photoId:take[0]?.id||null,photo2Id:take[1]?.id||null,photo3Id:take[2]?.id||null,photo4Id:take[3]?.id||null};
-    }
-    const portraits=list.filter(x=>photoShape(x)==='portrait');
-    const landscapes=list.filter(x=>photoShape(x)!=='portrait');
-
-    // Compacta: aproveita mais cada página, ideal para apresentações longas.
-    if(density==='compact'){
-      if(list.length>=4){const take=list.splice(0,4);return{id:uid(),layout:'four',title,photoId:take[0].id,photo2Id:take[1].id,photo3Id:take[2].id,photo4Id:take[3].id};}
-      if(list.length===3){const take=list.splice(0,3);return{id:uid(),layout:'three',title,photoId:take[0].id,photo2Id:take[1].id,photo3Id:take[2].id};}
-      if(list.length===2){const a=list.shift(),b=list.shift();return{id:uid(),layout:'two',title,photoId:a.id,photo2Id:b.id};}
-      const a=list.shift();return{id:uid(),layout:'one',title,photoId:a.id,fit:photoShape(a)==='portrait'?'contain':'cover'};
+      const target=density==='compact'?4:density==='detailed'?1:(template==='catalog'?4:2);
+      const take=list.splice(0,Math.min(target,list.length));
+      return make(take.length===1?'one':take.length===2?'two':take.length===3?'three':'four',take);
     }
 
-    // Detalhada: dá mais espaço às imagens e cria um ritmo mais luxuoso.
-    if(density==='detailed'){
-      if(photoShape(list[0])==='portrait'&&portraits.length>=2){const a=takePhoto(list,x=>photoShape(x)==='portrait'),b=takePhoto(list,x=>photoShape(x)==='portrait');return{id:uid(),layout:'portraitPair',title,photoId:a.id,photo2Id:b.id};}
-      if(photoShape(list[0])!=='portrait'){const a=list.shift();return{id:uid(),layout:'one',title,photoId:a.id,fit:'cover'};}
-      const a=list.shift();return{id:uid(),layout:'one',title,photoId:a.id,fit:'contain'};
+    // GALERIA PREMIUM — uma imagem por página; na versão compacta admite duas.
+    if(template==='gallery'){
+      if(density==='compact'&&list.length>=2)return two();
+      return one();
     }
 
-    // Equilibrada: comportamento recomendado para a maioria das apresentações.
-    if(template==='minimal'){
-      if(photoShape(list[0])==='portrait'&&portraits.length>=2){const a=takePhoto(list,x=>photoShape(x)==='portrait'),b=takePhoto(list,x=>photoShape(x)==='portrait');return{id:uid(),layout:'portraitPair',title,photoId:a.id,photo2Id:b.id};}
-      const a=list.shift();return{id:uid(),layout:'one',title,photoId:a.id,fit:photoShape(a)==='portrait'?'contain':'cover'};
+    // ARQUITETURA — privilegia leitura técnica e margens generosas.
+    if(template==='architectural'){
+      if(density==='compact'&&list.length>=2)return two();
+      if(portraits().length>=2&&density!=='detailed'){
+        const a=takePhoto(list,x=>photoShape(x)==='portrait'),b=takePhoto(list,x=>photoShape(x)==='portrait');
+        return{id:uid(),layout:'portraitPair',title,photoId:a?.id||null,photo2Id:b?.id||null};
+      }
+      return one();
     }
-    if(template==='catalog'&&list.length>=4){const take=list.splice(0,4);return{id:uid(),layout:'four',title,photoId:take[0].id,photo2Id:take[1].id,photo3Id:take[2].id,photo4Id:take[3].id};}
-    if(portraits.length>=2){const a=takePhoto(list,x=>photoShape(x)==='portrait'),b=takePhoto(list,x=>photoShape(x)==='portrait');return{id:uid(),layout:'portraitPair',title,photoId:a.id,photo2Id:b.id};}
-    if(landscapes.length>=1&&list.length>=3){const hero=takePhoto(list,x=>photoShape(x)!=='portrait'),b=list.shift(),c=list.shift();return{id:uid(),layout:'mixed',title,photoId:hero.id,photo2Id:b?.id||null,photo3Id:c?.id||null};}
-    if(list.length>=2){const a=list.shift(),b=list.shift();return{id:uid(),layout:'two',title,photoId:a.id,photo2Id:b.id};}
-    const a=list.shift();return{id:uid(),layout:'one',title,photoId:a.id,fit:photoShape(a)==='portrait'?'contain':'cover'};
+
+    // CATÁLOGO CLIENTE — máximo aproveitamento, sempre com grelha organizada.
+    if(template==='catalog'){
+      const target=density==='detailed'?2:(density==='compact'?4:4);
+      const take=list.splice(0,Math.min(target,list.length));
+      return make(take.length===1?'one':take.length===2?'two':take.length===3?'three':'four',take);
+    }
+
+    // EDITORIAL — ritmo de revista: destaque + imagens secundárias quando possível.
+    if(template==='editorial'){
+      if(density==='detailed')return one();
+      if(list.length>=3){const take=list.splice(0,3);return make('mixed',take);}
+      if(list.length===2)return two();
+      return one();
+    }
+
+    // ADC SIGNATURE — equilíbrio entre páginas de destaque e composições de duas/três imagens.
+    if(density==='detailed')return one();
+    if(portraits().length>=2){
+      const a=takePhoto(list,x=>photoShape(x)==='portrait'),b=takePhoto(list,x=>photoShape(x)==='portrait');
+      return{id:uid(),layout:'portraitPair',title,photoId:a?.id||null,photo2Id:b?.id||null};
+    }
+    if(density==='compact'&&list.length>=4)return make('four',list.splice(0,4));
+    if(list.length>=3){const take=list.splice(0,3);return make('mixed',take);}
+    if(list.length===2)return two();
+    return one();
   }
 
   function autoGeneratePresentation(p,template='official',opts={intro:true,group:false,optimize:true,noRepeat:true,end:true,density:'balanced'}){
@@ -871,14 +895,16 @@
       gallery:{bg:'#ffffff',accent:'#8a5f45',ink:'#242424',muted:'#77716c',soft:'#f0ece8'}
     })[id]||{bg:'#d8d8d8',accent:'#2d4149',ink:'#2d4149',muted:'#4e5960',soft:'#d8d8d8'};
   }
-  function pdfBrand(ctx,adcImg,inter4Img,tokens,themeId){
-    // Mantém o símbolo ADC e o logótipo inter4 como elementos gráficos reais,
-    // sem os substituir por texto redesenhado.
-    if(themeId==='dark'){ctx.fillStyle='#f5f0e9';ctx.fillRect(48,16,252,136);}
-    if(adcImg) ctx.drawImage(adcImg,62,24,108,88);
-    ctx.fillStyle=themeId==='dark'?'#20394b':tokens.ink;ctx.font='300 42px Lato, Arial';ctx.fillText('Studio',178,84);
-    ctx.fillStyle=themeId==='dark'?'#6f655f':tokens.muted;ctx.font='14px Arial';ctx.fillText('by',64,126);
-    if(inter4Img) ctx.drawImage(inter4Img,92,94,176,70);
+  function pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,placement='header'){
+    // Zona de marca reservada: nunca partilha o espaço dos títulos.
+    const header=placement==='header';
+    const x=header?1280:62, y=header?24:28, scale=header?.72:.92;
+    const boxW=header?265:270,boxH=header?118:132;
+    if(themeId==='dark'){ctx.fillStyle='#f5f0e9';ctx.fillRect(x-10,y-8,boxW,boxH);}
+    if(adcImg)ctx.drawImage(adcImg,x,y,108*scale,88*scale);
+    ctx.fillStyle=themeId==='dark'?'#20394b':tokens.ink;ctx.font=`300 ${42*scale}px Arial`;ctx.fillText('Studio',x+116*scale,y+60*scale);
+    ctx.fillStyle=themeId==='dark'?'#6f655f':tokens.muted;ctx.font=`${14*scale}px Arial`;ctx.fillText('by',x+2*scale,y+104*scale);
+    if(inter4Img)ctx.drawImage(inter4Img,x+30*scale,y+72*scale,176*scale,70*scale);
   }
   async function renderSlideCanvas(p,pg){
     const c=document.createElement('canvas');c.width=1600;c.height=900;const ctx=c.getContext('2d');const tokens=themeTokens(p),themeId=p.presentationTheme||'official';ctx.fillStyle=tokens.bg;ctx.fillRect(0,0,c.width,c.height);
@@ -902,32 +928,52 @@
     if(pg.layout==='officialStrip'){ctx.fillStyle='#d8d8d8';ctx.fillRect(0,0,1600,900);drawOfficialBrand();const ids5=[pg.photoId,pg.photo2Id,pg.photo3Id,pg.photo4Id,pg.photo5Id];const arr=[];for(const id of ids5){const ph=id?photoById(p,id):null;if(ph){try{arr.push(await loadCanvasImage(ph.data));}catch(e){}}}const n=arr.length||1,pad=55,gap=8,totalW=1600-pad*2-gap*(n-1),w=totalW/n;arr.forEach((im,k)=>drawContainImage(ctx,im,pad+k*(w+gap),365,w,370,'#d8d8d8'));ctx.fillStyle='#4e5960';ctx.font='15px Arial';const rights=md.stripRights||'';ctx.fillText(rights,(1600-ctx.measureText(rights).width)/2,835);return c;}
     if(pg.layout==='officialContact'){ctx.fillStyle='#d8d8d8';ctx.fillRect(0,0,1600,900);if(adcImg)ctx.drawImage(adcImg,235,315,190,155);ctx.fillStyle='#2d4149';ctx.font='300 70px Arial';ctx.fillText('Studio',445,415);ctx.fillStyle='#596168';ctx.font='22px Arial';ctx.fillText('by',245,510);if(inter4Img)ctx.drawImage(inter4Img,300,455,330,120);ctx.fillStyle='#465159';ctx.font='24px Arial';let yy=365;for(const line of [co.email,co.phone,co.address,co.website].filter(Boolean)){ctx.fillText(line,760,yy);yy+=42;}const drawP=(name,role,phone,x)=>{let y=560;if(name){ctx.fillStyle='#2d4149';ctx.font='700 25px Arial';ctx.fillText(name,x,y);y+=36;}ctx.fillStyle='#465159';ctx.font='21px Arial';if(role){ctx.fillText(role,x,y);y+=34;}if(phone)ctx.fillText(phone,x,y);};drawP(co.contact1Name,co.contact1Role,co.contact1Phone,760);drawP(co.contact2Name,co.contact2Role,co.contact2Phone,1110);return c;}
     ctx.save();ctx.scale(1,.9);
-    pdfBrand(ctx,adcImg,inter4Img,tokens,themeId);
+    const drawHeaderTitle=(txt)=>{
+      ctx.fillStyle=ink;ctx.font='600 34px Arial';
+      const y2=wrapCanvasTextReturn(ctx,txt||'',80,92,930,40);
+      ctx.fillStyle=accent;ctx.fillRect(80,y2+14,72,4);
+      return Math.max(170,y2+45);
+    };
     if(pg.layout==='cover'){
-      if(imgs[0])drawContainImage(ctx,imgs[0],790,0,810,1000,tokens.bg);ctx.fillStyle=accent;ctx.fillRect(82,238,70,5);ctx.fillStyle=muted;ctx.font='18px Arial';ctx.fillText('PROPOSTA DE INTERIORES',82,300);ctx.fillStyle=ink;ctx.font='700 58px Arial';wrapCanvasText(ctx,pg.title||p.presentationTitle||p.name,82,390,590,68);ctx.fillStyle=muted;ctx.font='22px Arial';wrapCanvasText(ctx,pg.subtitle||p.presentationSubtitle||p.type||'',82,535,575,32);ctx.fillStyle=muted;ctx.font='14px Arial';ctx.fillText('DESIGN  •  MOBILIÁRIO  •  PESSOAS',82,920);
+      pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'cover');
+      if(imgs[0])drawContainImage(ctx,imgs[0],790,0,810,1000,tokens.bg);
+      ctx.fillStyle=accent;ctx.fillRect(82,238,70,5);ctx.fillStyle=muted;ctx.font='18px Arial';ctx.fillText('PROPOSTA DE INTERIORES',82,300);
+      ctx.fillStyle=ink;ctx.font='700 52px Arial';const ty=wrapCanvasTextReturn(ctx,pg.title||p.presentationTitle||p.name,82,380,590,60);
+      ctx.fillStyle=muted;ctx.font='21px Arial';wrapCanvasText(ctx,pg.subtitle||p.presentationSubtitle||p.type||'',82,ty+55,575,31);
+      ctx.fillStyle=muted;ctx.font='14px Arial';ctx.fillText('DESIGN  •  MOBILIÁRIO  •  PESSOAS',82,920);
     }else if(pg.layout==='brief'){
-      ctx.fillStyle=soft;ctx.fillRect(0,0,520,1000);pdfBrand(ctx,adcImg,inter4Img,tokens,themeId);ctx.fillStyle=muted;ctx.font='16px Arial';ctx.fillText('CLIENTE',82,250);ctx.fillStyle=ink;ctx.font='700 46px Arial';wrapCanvasText(ctx,p.client||'Projeto',82,325,350,54);ctx.fillStyle=ink;ctx.font='700 22px Arial';wrapCanvasText(ctx,p.type||'Interiores',82,470,350,30);ctx.fillStyle=muted;ctx.font='19px Arial';wrapCanvasText(ctx,p.location||'',82,520,350,28);ctx.fillStyle=accent;ctx.fillRect(615,245,72,5);ctx.fillStyle=muted;ctx.font='16px Arial';ctx.fillText('PONTOS PRINCIPAIS',615,300);ctx.fillStyle=ink;ctx.font='700 46px Arial';wrapCanvasText(ctx,pg.title||p.presentationTitle||p.name,615,375,820,56);ctx.fillStyle=muted;ctx.font='21px Arial';let yy=500;const desc=pg.subtitle||p.presentationConcept||'';yy=wrapCanvasTextReturn(ctx,desc,615,yy,820,31)+25;ctx.fillStyle=ink;ctx.font='700 21px Arial';for(const point of (pg.points||p.presentationPoints||[])){ctx.fillStyle=accent;ctx.beginPath();ctx.arc(625,yy-7,5,0,Math.PI*2);ctx.fill();ctx.fillStyle=ink;yy=wrapCanvasTextReturn(ctx,point,650,yy,760,30)+13;}
+      ctx.fillStyle=soft;ctx.fillRect(0,0,520,1000);pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'header');
+      ctx.fillStyle=muted;ctx.font='16px Arial';ctx.fillText('CLIENTE',82,255);
+      ctx.fillStyle=ink;ctx.font='700 40px Arial';let ly=wrapCanvasTextReturn(ctx,p.client||'Projeto',82,320,350,47)+60;
+      ctx.font='700 22px Arial';ly=wrapCanvasTextReturn(ctx,p.type||'Interiores',82,ly,350,30)+42;
+      ctx.fillStyle=muted;ctx.font='19px Arial';wrapCanvasText(ctx,p.location||'',82,ly,350,28);
+      ctx.fillStyle=muted;ctx.font='16px Arial';ctx.fillText('PONTOS PRINCIPAIS',615,260);
+      ctx.fillStyle=ink;ctx.font='700 38px Arial';let ry=wrapCanvasTextReturn(ctx,pg.title||p.presentationTitle||p.name,615,325,730,46)+52;
+      ctx.fillStyle=muted;ctx.font='20px Arial';ry=wrapCanvasTextReturn(ctx,pg.subtitle||p.presentationConcept||'',615,ry,760,30)+48;
+      ctx.fillStyle=ink;ctx.font='700 20px Arial';for(const point of (pg.points||p.presentationPoints||[])){ctx.fillStyle=accent;ctx.beginPath();ctx.arc(625,ry-7,5,0,Math.PI*2);ctx.fill();ctx.fillStyle=ink;ry=wrapCanvasTextReturn(ctx,point,650,ry,720,29)+19;}
     }else if(pg.layout==='section'){
-      ctx.fillStyle=muted;ctx.font='16px Arial';ctx.fillText('ADC STUDIO',82,300);ctx.fillStyle=ink;ctx.font='700 72px Arial';wrapCanvasText(ctx,pg.title||'Ambiente',82,410,930,82);ctx.fillStyle=accent;ctx.fillRect(82,485,86,5);ctx.fillStyle=muted;ctx.font='22px Arial';wrapCanvasText(ctx,pg.subtitle||'Seleção visual do ambiente',82,560,850,34);
+      pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'header');ctx.fillStyle=muted;ctx.font='16px Arial';ctx.fillText('ADC STUDIO',82,300);
+      ctx.fillStyle=ink;ctx.font='700 62px Arial';const sy=wrapCanvasTextReturn(ctx,pg.title||'Ambiente',82,410,930,72);ctx.fillStyle=accent;ctx.fillRect(82,sy+28,86,5);
+      ctx.fillStyle=muted;ctx.font='22px Arial';wrapCanvasText(ctx,pg.subtitle||'Seleção visual do ambiente',82,sy+100,850,34);
     }else if(pg.layout==='one'){
-      title(pg.title||'Visualização',40,80,118);if(imgs[0])drawContainImage(ctx,imgs[0],80,160,1440,770,tokens.bg);
+      pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'header');const top=drawHeaderTitle(pg.title||'Visualização');if(imgs[0])drawContainImage(ctx,imgs[0],80,top,1440,930-top,tokens.bg);
     }else if(pg.layout==='two'||pg.layout==='beforeafter'){
-      title(pg.title||'Visualização',40,80,118);if(imgs[0])drawContainImage(ctx,imgs[0],80,160,700,770,tokens.bg);if(imgs[1])drawContainImage(ctx,imgs[1],820,160,700,770,tokens.bg);
+      pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'header');const top=drawHeaderTitle(pg.title||(pg.layout==='beforeafter'?'Antes e depois':'Visualização'));if(imgs[0])drawContainImage(ctx,imgs[0],80,top,700,930-top,tokens.bg);if(imgs[1])drawContainImage(ctx,imgs[1],820,top,700,930-top,tokens.bg);
     }else if(pg.layout==='portraitPair'){
-      title(pg.title||'Visualização',40,80,118);if(imgs[0])drawContainImage(ctx,imgs[0],180,160,560,770,tokens.bg);if(imgs[1])drawContainImage(ctx,imgs[1],860,160,560,770,tokens.bg);
-    }else if(pg.layout==='mixed'){
-      title(pg.title||'Ambiente em destaque',40,80,118);if(imgs[0])drawContainImage(ctx,imgs[0],80,160,860,770,tokens.bg);if(imgs[1])drawContainImage(ctx,imgs[1],980,160,540,365,tokens.bg);if(imgs[2])drawContainImage(ctx,imgs[2],980,565,540,365,tokens.bg);
-    }else if(pg.layout==='three'){
-      title(pg.title||'Ambiente em destaque',40,80,118);if(imgs[0])drawContainImage(ctx,imgs[0],80,160,860,770,tokens.bg);if(imgs[1])drawContainImage(ctx,imgs[1],980,160,540,365,tokens.bg);if(imgs[2])drawContainImage(ctx,imgs[2],980,565,540,365,tokens.bg);
+      pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'header');const top=drawHeaderTitle(pg.title||'Visualização');if(imgs[0])drawContainImage(ctx,imgs[0],180,top,560,930-top,tokens.bg);if(imgs[1])drawContainImage(ctx,imgs[1],860,top,560,930-top,tokens.bg);
+    }else if(pg.layout==='mixed'||pg.layout==='three'){
+      pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'header');const top=drawHeaderTitle(pg.title||'Ambiente em destaque');const h=930-top;if(imgs[0])drawContainImage(ctx,imgs[0],80,top,860,h,tokens.bg);if(imgs[1])drawContainImage(ctx,imgs[1],980,top,540,(h-40)/2,tokens.bg);if(imgs[2])drawContainImage(ctx,imgs[2],980,top+(h+40)/2,540,(h-40)/2,tokens.bg);
     }else if(pg.layout==='four'){
-      title(pg.title||'Seleção visual',40,80,118);if(imgs[0])drawContainImage(ctx,imgs[0],80,160,700,355,tokens.bg);if(imgs[1])drawContainImage(ctx,imgs[1],820,160,700,355,tokens.bg);if(imgs[2])drawContainImage(ctx,imgs[2],80,555,700,355,tokens.bg);if(imgs[3])drawContainImage(ctx,imgs[3],820,555,700,355,tokens.bg);
+      pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'header');const top=drawHeaderTitle(pg.title||'Seleção visual');const h=(930-top-40)/2;if(imgs[0])drawContainImage(ctx,imgs[0],80,top,700,h,tokens.bg);if(imgs[1])drawContainImage(ctx,imgs[1],820,top,700,h,tokens.bg);if(imgs[2])drawContainImage(ctx,imgs[2],80,top+h+40,700,h,tokens.bg);if(imgs[3])drawContainImage(ctx,imgs[3],820,top+h+40,700,h,tokens.bg);
     }else if(pg.layout==='text'||pg.layout==='details'){
-      ctx.fillStyle=muted;ctx.font='16px Arial';ctx.fillText('ADC STUDIO',80,260);ctx.fillStyle=ink;ctx.font='700 52px Arial';wrapCanvasText(ctx,pg.title||'Conceito',80,345,590,60);ctx.fillStyle=muted;ctx.font='22px Arial';wrapCanvasText(ctx,pg.subtitle||p.notes||'',80,490,590,34);if(imgs[0])drawContainImage(ctx,imgs[0],800,0,800,1000,tokens.bg);
+      pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'cover');ctx.fillStyle=muted;ctx.font='16px Arial';ctx.fillText('ADC STUDIO',80,285);ctx.fillStyle=ink;ctx.font='700 46px Arial';const ty=wrapCanvasTextReturn(ctx,pg.title||'Conceito',80,360,590,54);ctx.fillStyle=muted;ctx.font='21px Arial';wrapCanvasText(ctx,pg.subtitle||p.notes||'',80,ty+70,590,33);if(imgs[0])drawContainImage(ctx,imgs[0],800,0,800,1000,tokens.bg);
     }else if(pg.layout==='moodboard'){
-      title(pg.title||'Moodboard',40,80,118);if(imgs[0])drawContainImage(ctx,imgs[0],80,160,700,355,tokens.bg);if(imgs[1])drawContainImage(ctx,imgs[1],820,160,700,355,tokens.bg);if(imgs[2])drawContainImage(ctx,imgs[2],80,555,700,355,tokens.bg);ctx.fillStyle=soft;ctx.fillRect(820,555,700,355);ctx.fillStyle=muted;ctx.font='20px Arial';ctx.fillText('MATERIAIS • TEXTURAS • CORES',940,740);
+      pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'header');const top=drawHeaderTitle(pg.title||'Moodboard');const h=(930-top-40)/2;if(imgs[0])drawContainImage(ctx,imgs[0],80,top,700,h,tokens.bg);if(imgs[1])drawContainImage(ctx,imgs[1],820,top,700,h,tokens.bg);if(imgs[2])drawContainImage(ctx,imgs[2],80,top+h+40,700,h,tokens.bg);ctx.fillStyle=soft;ctx.fillRect(820,top+h+40,700,h);ctx.fillStyle=muted;ctx.font='20px Arial';ctx.fillText('MATERIAIS • TEXTURAS • CORES',940,top+h+40+h/2);
     }else if(pg.layout==='contact'){
-      ctx.fillStyle=accent;ctx.fillRect(82,300,70,5);ctx.fillStyle=ink;ctx.font='700 64px Arial';ctx.fillText('Obrigado.',82,410);ctx.fillStyle=muted;ctx.font='22px Arial';wrapCanvasText(ctx,pg.subtitle||p.presentationClosing||'',82,485,580,34);ctx.fillStyle=muted;ctx.font='14px Arial';ctx.fillText('INTER4 MOBILIÁRIO • DESIGN • INTERIORES',82,900);if(imgs[0])drawContainImage(ctx,imgs[0],800,0,800,1000,tokens.bg);
-    }else if(imgs[0])drawContainImage(ctx,imgs[0],80,160,1440,770,tokens.bg);
+      pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'cover');ctx.fillStyle=accent;ctx.fillRect(82,310,70,5);ctx.fillStyle=ink;ctx.font='700 58px Arial';ctx.fillText('Obrigado.',82,415);ctx.fillStyle=muted;ctx.font='21px Arial';wrapCanvasText(ctx,pg.subtitle||p.presentationClosing||'',82,495,580,33);ctx.fillStyle=muted;ctx.font='14px Arial';ctx.fillText('INTER4 MOBILIÁRIO • DESIGN • INTERIORES',82,900);if(imgs[0])drawContainImage(ctx,imgs[0],800,0,800,1000,tokens.bg);
+    }else{
+      pdfBrand(ctx,adcImg,inter4Img,tokens,themeId,'header');const top=drawHeaderTitle(pg.title||'Visualização');if(imgs[0])drawContainImage(ctx,imgs[0],80,top,1440,930-top,tokens.bg);
+    }
     return c;
   }
   function wrapCanvasText(ctx,text,x,y,maxWidth,lineHeight){const words=String(text||'').split(/\s+/);let line='';for(let n=0;n<words.length;n++){const test=line+words[n]+' ';if(ctx.measureText(test).width>maxWidth&&n>0){ctx.fillText(line.trim(),x,y);line=words[n]+' ';y+=lineHeight;}else line=test;}if(line.trim())ctx.fillText(line.trim(),x,y);}
