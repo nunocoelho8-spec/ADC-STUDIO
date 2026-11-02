@@ -1,4 +1,5 @@
 (() => {
+  const APP_VERSION = '3.4';
   const STORAGE_KEY = 'adc_by_inter4_v01'; // mantém compatibilidade com v0.1/v0.2
   const IDB_NAME = 'adc_studio_offline_db';
   const IDB_STORE = 'state';
@@ -168,7 +169,7 @@
     return `<nav class="nav">${items.map(([id,ico,label])=>`<button data-nav="${id}" class="${active===id?'active':''}"><span class="nav-ico">${ico}</span><span class="label">${label}</span></button>`).join('')}</nav>`;
   }
   function shell(content,active='projects'){
-    app.innerHTML=`<div class="app-shell"><aside class="sidebar"><div class="sidebar-brand">${brandHtml(true)}</div>${navHtml(active)}<div class="sidebar-foot">ADC Studio • PWA Offline v2.1<br>Funciona localmente e sem servidor.<button id="backupMini">Exportar cópia</button><button id="importMini">Importar projeto</button><button id="backupsMini">Cópias e transferência</button><button id="backWelcome">Ecrã inicial</button></div></aside><main class="main">${content}</main></div>`;
+    app.innerHTML=`<div class="app-shell"><aside class="sidebar"><div class="sidebar-brand">${brandHtml(true)}</div>${navHtml(active)}<div class="sidebar-foot">ADC Studio • v${APP_VERSION}<br>Funciona localmente e sem servidor.<button id="backupMini">Exportar cópia</button><button id="importMini">Importar projeto</button><button id="backupsMini">Cópias e transferência</button><button id="backWelcome">Ecrã inicial</button></div></aside><main class="main">${content}</main></div>`;
     qsa('[data-nav]').forEach(b=>b.onclick=()=>{
       const n=b.dataset.nav;
       go(n);
@@ -439,7 +440,7 @@
     const objectiveLabel=({client:'Apresentar ao cliente',project:'Apresentação de projeto',technical:'Apresentação técnica'})[p.presentationObjective]||'Apresentar ao cliente';
     const isPro=p.presentationMode==='professional';
     return `<div class="section-title"><h3>${isPro?'Apresentação profissional':'Apresentação'}</h3><small>${selectedCount} imagem(ns) disponíveis • ${p.pages.length} página(s)</small></div>
-      <section class="auto-present-card pro-present-card"><div class="auto-present-copy"><div class="auto-kicker">ADC STUDIO 3.0 • CURADORIA PROFISSIONAL</div><h2>Uma apresentação pensada página a página.</h2><p>A ADC Studio organiza as imagens por ambiente, escolhe uma imagem principal, separa pormenores e desenhos técnicos e cria um ritmo visual mais próximo de uma apresentação feita por um profissional.</p><div class="auto-steps"><span><b>1</b> Sugerir seleção</span><span><b>2</b> Rever funções</span><span><b>3</b> Criar apresentação</span></div><div class="auto-actions"><button class="btn primary big" id="autoGenerate">✦ Criar apresentação profissional</button><button class="btn" id="presentationBriefBtn">✎ Dados do PDF</button><button class="btn" id="addPhotosFromPresentation">+ Adicionar imagens</button></div><div class="auto-current">Objetivo: <strong>${objectiveLabel}</strong> &nbsp;•&nbsp; Identidade: <strong>ADC Oficial</strong> &nbsp;•&nbsp; Modo: <strong>${isPro?'Profissional':'Clássico'}</strong></div></div><div class="auto-present-preview">${slideHtml(p,pg)}</div></section>
+      <section class="auto-present-card pro-present-card"><div class="auto-present-copy"><div class="auto-kicker">ADC STUDIO ${APP_VERSION} • CURADORIA PROFISSIONAL</div><h2>Uma apresentação pensada página a página.</h2><p>A ADC Studio organiza as imagens por ambiente, escolhe uma imagem principal, separa pormenores e desenhos técnicos e cria um ritmo visual mais próximo de uma apresentação feita por um profissional.</p><div class="auto-steps"><span><b>1</b> Sugerir seleção</span><span><b>2</b> Rever funções</span><span><b>3</b> Criar apresentação</span></div><div class="auto-actions"><button class="btn primary big" id="autoGenerate">✦ Criar apresentação profissional</button><button class="btn" id="presentationBriefBtn">✎ Dados do PDF</button><button class="btn" id="addPhotosFromPresentation">+ Adicionar imagens</button></div><div class="auto-current">Objetivo: <strong>${objectiveLabel}</strong> &nbsp;•&nbsp; Identidade: <strong>ADC Oficial</strong> &nbsp;•&nbsp; Modo: <strong>${isPro?'Profissional':'Clássico'}</strong></div></div><div class="auto-present-preview">${slideHtml(p,pg)}</div></section>
       <div class="section-title"><h3>Pré-visualização e ajustes</h3><small>O PDF usa a mesma sequência</small></div><div class="overview-grid"><div class="export-preview">${slideHtml(p,pg)}</div><aside class="detail-card"><h3>Apresentação do cliente</h3><p style="font-size:11px;color:#777;line-height:1.6">Podes aceitar a proposta automática ou ajustar páginas e imagens antes de gerar o PDF final.</p><div style="display:grid;gap:8px;margin-top:16px"><button class="btn" id="openBuilder">Ajustar páginas</button><button class="btn" id="startPresentation">Modo apresentação</button><button class="btn primary" id="printPdf">Gerar PDF agora</button></div></aside></div>`;
   }
   function reorderPhotosModal(p){
@@ -767,7 +768,7 @@
       const roles={main:0,detail:0,technical:0,exclude:0,auto:0};p.photos.forEach(ph=>roles[ph.presentationRole||'auto']++);
       const objectiveCards=['client','project','technical'].map(id=>{const m=objectiveMeta(id);return `<button class="pro-objective ${objective===id?'selected':''}" data-objective="${id}"><span>${m.icon}</span><b>${m.label}</b><small>${m.desc}</small></button>`;}).join('');
       const review=p.photos.map(ph=>`<div class="pro-review-row"><img src="${ph.data}" alt=""><div><b>${escapeHtml(ph.room||UNASSIGNED_ROOM)}</b><small>${escapeHtml(ph.name||'Fotografia')}</small></div><select data-pro-role="${ph.id}">${['auto','main','detail','technical','exclude'].map(r=>`<option value="${r}" ${ph.presentationRole===r?'selected':''}>${photoRoleLabel(r)}</option>`).join('')}</select></div>`).join('');
-      modal(`<div class="auto-modal-head pro-modal-head"><div><div class="auto-kicker">ADC STUDIO 3.0</div><h3>Criar apresentação profissional</h3><p>Escolhe apenas o objetivo. A identidade visual continua a ser ADC Oficial; a composição muda página a página conforme as imagens.</p></div></div>
+      modal(`<div class="auto-modal-head pro-modal-head"><div><div class="auto-kicker">ADC STUDIO ${APP_VERSION}</div><h3>Criar apresentação profissional</h3><p>Escolhe apenas o objetivo. A identidade visual continua a ser ADC Oficial; a composição muda página a página conforme as imagens.</p></div></div>
         <div class="auto-subtitle">1. Objetivo da apresentação</div><div class="pro-objective-grid">${objectiveCards}</div>
         <div class="pro-curation-bar ${suggestedOnce?'suggested':''}"><div><b>2. Curadoria das imagens</b><span>★ ${roles.main} principais &nbsp;•&nbsp; ◎ ${roles.detail} pormenores &nbsp;•&nbsp; ⌑ ${roles.technical} técnicas &nbsp;•&nbsp; × ${roles.exclude} fora</span></div><button class="btn primary" id="suggestCuration">${suggestedOnce?'✓ Sugestão aplicada':'✦ Sugerir seleção profissional'}</button></div>
         <details class="pro-review" ${reviewOpen?'open':''}><summary>${suggestedOnce?'Seleção sugerida — rever / alterar':'Rever / alterar a seleção das imagens'}</summary><div class="pro-review-list">${review}</div></details>
@@ -1144,4 +1145,4 @@
   bootstrap();
 })();
 
-// ADC Studio PWA Offline v2.1 — local por dispositivo + transferências manuais
+// ADC Studio v3.4 — atualização automática + local por dispositivo + transferências manuais
