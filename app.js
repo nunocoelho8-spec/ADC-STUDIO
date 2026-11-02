@@ -1,5 +1,8 @@
 (() => {
-  const APP_VERSION = '3.7';
+  const APP_VERSION = '3.8';
+  const PDF_RENDER_SCALE = 2; // 3200x1800: mais definição no PDF
+  const PDF_CANVAS_W = 1600 * PDF_RENDER_SCALE;
+  const PDF_CANVAS_H = 900 * PDF_RENDER_SCALE;
   const STORAGE_KEY = 'adc_by_inter4_v01'; // mantém compatibilidade com v0.1/v0.2
   const IDB_NAME = 'adc_studio_offline_db';
   const IDB_STORE = 'state';
@@ -962,7 +965,7 @@
     if(inter4Img)ctx.drawImage(inter4Img,x+30*scale,y+72*scale,176*scale,70*scale);
   }
   async function renderSlideCanvas(p,pg){
-    const c=document.createElement('canvas');c.width=1600;c.height=900;const ctx=c.getContext('2d');const tokens=themeTokens(p),themeId=p.presentationTheme||'official';ctx.fillStyle=tokens.bg;ctx.fillRect(0,0,c.width,c.height);
+    const c=document.createElement('canvas');c.width=PDF_CANVAS_W;c.height=PDF_CANVAS_H;const ctx=c.getContext('2d');ctx.setTransform(PDF_RENDER_SCALE,0,0,PDF_RENDER_SCALE,0,0);ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';if('textRendering' in ctx)ctx.textRendering='optimizeLegibility';if('fontKerning' in ctx)ctx.fontKerning='normal';const tokens=themeTokens(p),themeId=p.presentationTheme||'official';ctx.fillStyle=tokens.bg;ctx.fillRect(0,0,1600,900);
     const ids=[pg.photoId,pg.photo2Id,pg.photo3Id,pg.photo4Id];const fallback=[p.photos[0],p.photos[1]||p.photos[0],p.photos[2]||p.photos[0],p.photos[3]||p.photos[0]];const srcs=ids.map((id,i)=>id?photoById(p,id)?.data:null).map((x,i)=>x||fallback[i]?.data||p.coverAsset||demoAssets[i%demoAssets.length]);
     const imgs=[];for(const src of srcs){try{imgs.push(await loadCanvasImage(src));}catch(e){imgs.push(null);}}
     let adcImg=null,inter4Img=null;
@@ -990,7 +993,7 @@
     if(pg.layout==='proHero'){
       if(imgs[0])drawProfessionalBackdrop(ctx,imgs[0]);
       if(imgs[0])drawContainImage(ctx,imgs[0],24,18,1552,864,'rgba(0,0,0,0)',.995);
-      ctx.save();ctx.shadowColor='rgba(255,255,255,.94)';ctx.shadowBlur=10;ctx.fillStyle='#596168';ctx.font='700 13px Arial';ctx.fillText(pg.subtitle||'IMAGEM PRINCIPAL',58,66);ctx.fillStyle='#2d4149';ctx.font='700 34px Arial';wrapCanvasText(ctx,pg.title||'Visualização',58,110,500,38);ctx.restore();
+      ctx.save();ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.fillStyle='#596168';ctx.font='700 13px Arial';ctx.fillText(pg.subtitle||'IMAGEM PRINCIPAL',58,66);ctx.fillStyle='#2d4149';ctx.font='700 34px Arial';wrapCanvasText(ctx,pg.title||'Visualização',58,110,500,38);ctx.restore();
       if(pg.showBrand)drawOfficialBrand(1360,36,.58);
       return c;
     }
@@ -998,14 +1001,14 @@
       if(imgs[0])drawProfessionalBackdrop(ctx,imgs[0]);
       if(imgs[0])drawContainImage(ctx,imgs[0],28,120,930,748,'rgba(0,0,0,0)',.99);
       if(imgs[1])drawContainImage(ctx,imgs[1],985,185,580,610,'rgba(0,0,0,0)',.99);
-      ctx.save();ctx.shadowColor='rgba(255,255,255,.94)';ctx.shadowBlur=10;ctx.fillStyle='#596168';ctx.font='700 13px Arial';ctx.fillText(pg.subtitle||'DUAS PERSPETIVAS',58,66);ctx.fillStyle='#2d4149';ctx.font='700 32px Arial';wrapCanvasText(ctx,pg.title||'Visualização',58,108,500,36);ctx.restore();return c;
+      ctx.save();ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.fillStyle='#596168';ctx.font='700 13px Arial';ctx.fillText(pg.subtitle||'DUAS PERSPETIVAS',58,66);ctx.fillStyle='#2d4149';ctx.font='700 32px Arial';wrapCanvasText(ctx,pg.title||'Visualização',58,108,500,36);ctx.restore();return c;
     }
     if(pg.layout==='proDetail'){
       if(imgs[0])drawProfessionalBackdrop(ctx,imgs[0]);
       if(imgs[0])drawContainImage(ctx,imgs[0],25,95,1110,775,'rgba(0,0,0,0)',.99);
       ctx.fillStyle='#596168';ctx.font='700 12px Arial';ctx.fillText('DETALHE',1160,222);
       if(imgs[1])drawContainImage(ctx,imgs[1],1142,238,400,520,'rgba(0,0,0,0)',.99);
-      ctx.save();ctx.shadowColor='rgba(255,255,255,.94)';ctx.shadowBlur=10;ctx.fillStyle='#596168';ctx.font='700 13px Arial';ctx.fillText(pg.subtitle||'PORMENOR EM DESTAQUE',58,62);ctx.fillStyle='#2d4149';ctx.font='700 32px Arial';wrapCanvasText(ctx,pg.title||'Pormenores',58,104,500,36);ctx.restore();return c;
+      ctx.save();ctx.shadowColor='transparent';ctx.shadowBlur=0;ctx.fillStyle='#596168';ctx.font='700 13px Arial';ctx.fillText(pg.subtitle||'PORMENOR EM DESTAQUE',58,62);ctx.fillStyle='#2d4149';ctx.font='700 32px Arial';wrapCanvasText(ctx,pg.title||'Pormenores',58,104,500,36);ctx.restore();return c;
     }
     if(pg.layout==='proTechnical'){
       ctx.fillStyle='#4e5960';ctx.font='700 14px Arial';ctx.fillText(pg.subtitle||'PLANTA / DESENHO TÉCNICO',65,108);ctx.fillStyle='#2d4149';ctx.font='700 32px Arial';wrapCanvasText(ctx,pg.title||'Documento técnico',65,150,1040,38);if(imgs[0])drawContainImage(ctx,imgs[0],50,190,1500,670,'#f3f3f1');if(pg.showBrand)drawOfficialBrand(1360,36,.58);return c;
@@ -1075,13 +1078,13 @@
     for(let i=0;i<count;i++){
       const page=3+i*3,img=4+i*3,content=5+i*3,j=jpegs[i];
       obj(page,[`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im${i} ${img} 0 R >> >> /Contents ${content} 0 R >>`]);
-      offsets[img]=len;push(`${img} 0 obj\n<< /Type /XObject /Subtype /Image /Width 1600 /Height 900 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${j.length} >>\nstream\n`);push(j);push('\nendstream\nendobj\n');
+      offsets[img]=len;push(`${img} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${PDF_CANVAS_W} /Height ${PDF_CANVAS_H} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${j.length} >>\nstream\n`);push(j);push('\nendstream\nendobj\n');
       const stream=`q\n${W} 0 0 ${H} 0 0 cm\n/Im${i} Do\nQ\n`;obj(content,[`<< /Length ${asciiBytes(stream).length} >>\nstream\n${stream}endstream`]);
     }
     const xref=len;push(`xref\n0 ${maxObj+1}\n0000000000 65535 f \n`);for(let n=1;n<=maxObj;n++)push(`${String(offsets[n]).padStart(10,'0')} 00000 n \n`);push(`trailer\n<< /Size ${maxObj+1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);return concatBytes(chunks);
   }
   async function exportPdfDirect(p){
-    const jpegs=[];for(let i=0;i<p.pages.length;i++){toast(`A criar PDF: página ${i+1}/${p.pages.length}`);const c=await renderSlideCanvas(p,p.pages[i]);jpegs.push(dataUrlBytes(c.toDataURL('image/jpeg',.9)));await new Promise(r=>setTimeout(r,20));}
+    const jpegs=[];for(let i=0;i<p.pages.length;i++){toast(`A criar PDF: página ${i+1}/${p.pages.length}`);const c=await renderSlideCanvas(p,p.pages[i]);jpegs.push(dataUrlBytes(c.toDataURL('image/jpeg',.98)));await new Promise(r=>setTimeout(r,20));}
     const pdf=buildPdf(jpegs),blob=new Blob([pdf],{type:'application/pdf'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${safeName(p.name)}_ADC_Studio.pdf`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500);
   }
 
