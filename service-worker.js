@@ -1,4 +1,4 @@
-const CACHE_NAME = 'adc-studio-pwa-v3-6';
+const CACHE_NAME = 'adc-studio-pwa-v3-7';
 const APP_SHELL = [
   './app.js', './index.html', './README.txt', './manifest.webmanifest', './styles.css',
   './assets/inter4_mark.png', './assets/inter4_mark_copper.png', './assets/demo_4.jpg',

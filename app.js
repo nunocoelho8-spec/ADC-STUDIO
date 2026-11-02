@@ -1,5 +1,5 @@
 (() => {
-  const APP_VERSION = '3.6';
+  const APP_VERSION = '3.7';
   const STORAGE_KEY = 'adc_by_inter4_v01'; // mantém compatibilidade com v0.1/v0.2
   const IDB_NAME = 'adc_studio_offline_db';
   const IDB_STORE = 'state';
@@ -697,10 +697,10 @@
     if(pg.layout==='officialPair')return `<div class="slide official-light official-pair">${officialBrandHtml('corner')}<div class="official-pair-left"><img src="${img1}" alt=""></div><div class="official-pair-right"><img src="${img2}" alt=""></div></div>`;
     if(pg.layout==='officialStrip'){const imgs=[img1,img2,img3,img4,pg.photo5Id?photoById(p,pg.photo5Id)?.data:null].filter(Boolean);return `<div class="slide official-light official-strip">${officialBrandHtml('corner')}<div class="official-strip-grid count-${imgs.length}">${imgs.map(src=>`<img src="${src}" alt="">`).join('')}</div><div class="official-rights">${escapeHtml(md.stripRights||'')}</div></div>`;}
     if(pg.layout==='officialContact'){const contact=(name,role,phone)=>name||role||phone?`<div class="official-contact-person"><b>${escapeHtml(name||'')}</b><span>${escapeHtml(role||'')}</span><span>${escapeHtml(phone||'')}</span></div>`:'';return `<div class="slide official-light official-contact"><div class="official-contact-brand">${officialBrandHtml('contact')}</div><div class="official-contact-details"><div>${co.email?`<span>${escapeHtml(co.email)}</span>`:''}${co.phone?`<span>${escapeHtml(co.phone)}</span>`:''}${co.address?`<span>${escapeHtml(co.address)}</span>`:''}${co.website?`<span>${escapeHtml(co.website)}</span>`:''}</div><div class="official-contact-people">${contact(co.contact1Name,co.contact1Role,co.contact1Phone)}${contact(co.contact2Name,co.contact2Role,co.contact2Phone)}</div></div></div>`;}
-    if(pg.layout==='proHero')return `<div class="slide pro-slide pro-hero pro-cinematic"><img class="pro-backdrop" src="${img1}" alt=""><div class="pro-cinematic-wash"></div><div class="pro-slide-head pro-head-overlay"><small>${escapeHtml(pg.subtitle||'IMAGEM PRINCIPAL')}</small><h2>${escapeHtml(pg.title||'Visualização')}</h2></div><div class="pro-hero-frame"><img src="${img1}" alt=""></div></div>`;
+    if(pg.layout==='proHero')return `<div class="slide pro-slide pro-hero pro-cinematic"><img class="pro-backdrop" src="${img1}" alt=""><div class="pro-cinematic-wash"></div>${pg.showBrand?`<div class="pro-transparent-logo">${officialBrandHtml('pro-transparent')}</div>`:''}<div class="pro-slide-head pro-head-overlay"><small>${escapeHtml(pg.subtitle||'IMAGEM PRINCIPAL')}</small><h2>${escapeHtml(pg.title||'Visualização')}</h2></div><div class="pro-hero-frame"><img src="${img1}" alt=""></div></div>`;
     if(pg.layout==='proDuo')return `<div class="slide pro-slide pro-duo pro-cinematic"><img class="pro-backdrop" src="${img1}" alt=""><div class="pro-cinematic-wash"></div><div class="pro-slide-head pro-head-overlay"><small>${escapeHtml(pg.subtitle||'DUAS PERSPETIVAS')}</small><h2>${escapeHtml(pg.title||'Visualização')}</h2></div><div class="pro-duo-grid"><div class="pro-duo-main"><img src="${img1}" alt=""></div><div class="pro-duo-secondary"><img src="${img2}" alt=""></div></div></div>`;
     if(pg.layout==='proDetail')return `<div class="slide pro-slide pro-detail pro-cinematic"><img class="pro-backdrop" src="${img1}" alt=""><div class="pro-cinematic-wash"></div><div class="pro-slide-head pro-head-overlay"><small>${escapeHtml(pg.subtitle||'PORMENOR EM DESTAQUE')}</small><h2>${escapeHtml(pg.title||'Pormenores')}</h2></div><div class="pro-detail-main"><img src="${img1}" alt=""></div><div class="pro-detail-side"><div class="pro-detail-label">DETALHE</div><img src="${img2}" alt=""></div></div>`;
-    if(pg.layout==='proTechnical')return `<div class="slide official-light pro-slide pro-technical"><div class="pro-slide-head"><small>${escapeHtml(pg.subtitle||'PLANTA / DESENHO TÉCNICO')}</small><h2>${escapeHtml(pg.title||'Documento técnico')}</h2></div><div class="pro-technical-frame"><img src="${img1}" alt=""></div></div>`;
+    if(pg.layout==='proTechnical')return `<div class="slide official-light pro-slide pro-technical">${pg.showBrand?`<div class="pro-transparent-logo pro-transparent-logo-light">${officialBrandHtml('pro-transparent')}</div>`:''}<div class="pro-slide-head"><small>${escapeHtml(pg.subtitle||'PLANTA / DESENHO TÉCNICO')}</small><h2>${escapeHtml(pg.title||'Documento técnico')}</h2></div><div class="pro-technical-frame"><img src="${img1}" alt=""></div></div>`;
     if(pg.layout==='cover')return `<div class="slide cover-slide ${themeClass}">${slideBrand('cover')}<img class="photo-big" src="${img1}"><div class="title-block"><div class="eyebrow">PROPOSTA DE INTERIORES</div><h2>${escapeHtml(pg.title||p.presentationTitle||p.name)}</h2><p>${escapeHtml(pg.subtitle||p.presentationSubtitle||p.type||'')}</p></div><div class="foot">DESIGN • MOBILIÁRIO • PESSOAS</div></div>`;
     if(pg.layout==='brief'){const pts=(pg.points||p.presentationPoints||[]).filter(Boolean);return `<div class="slide brief-slide ${themeClass}">${slideBrand()}<div class="brief-left"><div class="brief-kicker">CLIENTE</div><h3>${escapeHtml(p.client||'Projeto')}</h3><div class="brief-meta"><b>${escapeHtml(p.type||'Interiores')}</b><span>${escapeHtml(p.location||'')}</span></div></div><div class="brief-right"><div class="eyebrow">PONTOS PRINCIPAIS</div><h2>${escapeHtml(pg.title||p.presentationTitle||p.name)}</h2><p>${escapeHtml(pg.subtitle||p.presentationConcept||'')}</p>${pts.length?`<ul>${pts.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul>`:''}</div></div>`;}
     if(pg.layout==='section')return `<div class="slide section-slide ${themeClass}">${slideBrand()}<div class="section-slide-copy"><div class="eyebrow">ADC STUDIO</div><h2>${escapeHtml(pg.title||'Ambiente')}</h2><div class="section-rule"></div><p>${escapeHtml(pg.subtitle||'Seleção visual do ambiente')}</p></div></div>`;
@@ -867,13 +867,13 @@
       if(!arr.length)return;pages.push({id:uid(),layout:'officialSection',title:room==='Projeto'?'Visualização 3D':room});
       if(objective==='technical'){
         const ordered=[...arr].sort((a,b)=>(a.presentationRole==='technical'?-1:0)-(b.presentationRole==='technical'?-1:0));
-        ordered.forEach(ph=>pages.push({id:uid(),layout:'proTechnical',title:room==='Projeto'?'Documento técnico':room,photoId:ph.id,subtitle:ph.presentationRole==='technical'?'PLANTA / DESENHO TÉCNICO':'VISTA DE PROJETO'}));return;
+        ordered.forEach((ph,idx)=>pages.push({id:uid(),layout:'proTechnical',title:room==='Projeto'?'Documento técnico':room,photoId:ph.id,subtitle:ph.presentationRole==='technical'?'PLANTA / DESENHO TÉCNICO':'VISTA DE PROJETO',showBrand:idx===0}));return;
       }
       const main=arr.find(ph=>ph.presentationRole==='main')||arr.find(ph=>photoShape(ph)==='landscape')||arr[0];
       const details=arr.filter(ph=>ph.presentationRole==='detail'&&ph!==main);
       const regular=arr.filter(ph=>ph!==main&&ph.presentationRole!=='detail'&&ph.presentationRole!=='technical');
       const technical=arr.filter(ph=>ph.presentationRole==='technical');
-      if(main)pages.push({id:uid(),layout:'proHero',title:room==='Projeto'?'Imagem principal':room,photoId:main.id,subtitle:'IMAGEM PRINCIPAL'});
+      if(main)pages.push({id:uid(),layout:'proHero',title:room==='Projeto'?'Imagem principal':room,photoId:main.id,subtitle:'IMAGEM PRINCIPAL',showBrand:true});
       if(details.length&&regular.length){const d=details.shift(),r=regular.shift();pages.push({id:uid(),layout:'proDetail',title:room==='Projeto'?'Pormenores':room,photoId:r.id,photo2Id:d.id,subtitle:'PORMENOR EM DESTAQUE'});}
       else if(details.length){const d=details.shift();pages.push({id:uid(),layout:'proHero',title:'Pormenor',photoId:d.id,subtitle:'PORMENOR EM DESTAQUE'});}
       while(regular.length){const a=regular.shift(),b=regular.shift();pages.push({id:uid(),layout:b?'proDuo':'proHero',title:room==='Projeto'?'Visualização':room,photoId:a?.id||null,photo2Id:b?.id||null,subtitle:b?'DUAS PERSPETIVAS':'VISTA COMPLEMENTAR'});}
@@ -991,6 +991,7 @@
       if(imgs[0])drawProfessionalBackdrop(ctx,imgs[0]);
       if(imgs[0])drawContainImage(ctx,imgs[0],24,18,1552,864,'rgba(0,0,0,0)',.995);
       ctx.save();ctx.shadowColor='rgba(255,255,255,.94)';ctx.shadowBlur=10;ctx.fillStyle='#596168';ctx.font='700 13px Arial';ctx.fillText(pg.subtitle||'IMAGEM PRINCIPAL',58,66);ctx.fillStyle='#2d4149';ctx.font='700 34px Arial';wrapCanvasText(ctx,pg.title||'Visualização',58,110,500,38);ctx.restore();
+      if(pg.showBrand)drawOfficialBrand(1360,36,.58);
       return c;
     }
     if(pg.layout==='proDuo'){
@@ -1007,7 +1008,7 @@
       ctx.save();ctx.shadowColor='rgba(255,255,255,.94)';ctx.shadowBlur=10;ctx.fillStyle='#596168';ctx.font='700 13px Arial';ctx.fillText(pg.subtitle||'PORMENOR EM DESTAQUE',58,62);ctx.fillStyle='#2d4149';ctx.font='700 32px Arial';wrapCanvasText(ctx,pg.title||'Pormenores',58,104,500,36);ctx.restore();return c;
     }
     if(pg.layout==='proTechnical'){
-      ctx.fillStyle='#4e5960';ctx.font='700 14px Arial';ctx.fillText(pg.subtitle||'PLANTA / DESENHO TÉCNICO',65,108);ctx.fillStyle='#2d4149';ctx.font='700 32px Arial';wrapCanvasText(ctx,pg.title||'Documento técnico',65,150,1040,38);if(imgs[0])drawContainImage(ctx,imgs[0],50,190,1500,670,'#f3f3f1');return c;
+      ctx.fillStyle='#4e5960';ctx.font='700 14px Arial';ctx.fillText(pg.subtitle||'PLANTA / DESENHO TÉCNICO',65,108);ctx.fillStyle='#2d4149';ctx.font='700 32px Arial';wrapCanvasText(ctx,pg.title||'Documento técnico',65,150,1040,38);if(imgs[0])drawContainImage(ctx,imgs[0],50,190,1500,670,'#f3f3f1');if(pg.showBrand)drawOfficialBrand(1360,36,.58);return c;
     }
     ctx.save();ctx.scale(1,.9);
     const drawHeaderTitle=(txt)=>{
