@@ -376,3 +376,14 @@
 .pro-env-brand .official-brand-env .official-brand-by{gap:7px;margin-top:4px}.pro-env-brand .official-brand-env .official-brand-by span{font-size:10px}.pro-env-brand .official-brand-env .official-brand-by img{width:116px;height:42px}
 .pro-hero>.official-brand-corner{display:none!important}
 @media(max-width:760px){.pro-env-brand{width:18%;height:14%}.pro-env-brand .official-brand-env{transform:scale(.46)}}
+
+
+/* v3.6 — páginas de imagem sem caixas brancas e sem logótipo repetido */
+.pro-slide .pro-env-brand{display:none!important}
+.pro-head-overlay{background:transparent!important;padding:0!important;border-radius:0!important}
+.pro-slide-head{left:3.2%!important;top:3.6%!important;width:42%!important;text-shadow:0 0 3px rgba(255,255,255,.98),0 1px 10px rgba(255,255,255,.95),0 0 18px rgba(255,255,255,.75)}
+.pro-slide-head small{font-size:6px!important;font-weight:800!important;color:#4f5c62!important}
+.pro-slide-head h2{font-size:18px!important;color:#263f4e!important}
+.pro-detail-side{background:transparent!important;padding:0!important;border-radius:0!important;box-shadow:none!important;top:24%!important;bottom:9%!important}
+.pro-detail-label{text-shadow:0 0 5px rgba(255,255,255,.98);font-weight:800;color:#526067}
+.pro-technical .pro-slide-head{top:4.2%!important}
