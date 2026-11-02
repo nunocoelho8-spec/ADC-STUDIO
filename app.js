@@ -71,7 +71,7 @@
     if(!d.company.phone)d.company.phone='255 965 743';
     d.projects.forEach((p,i)=>{
       p.photos=Array.isArray(p.photos)?p.photos:[];
-      p.photos.forEach((ph,idx)=>{ if(!ph.room||ph.room==='Geral') ph.room=UNASSIGNED_ROOM; if(!ph.label) ph.label='Fotografia'; if(ph.includeInPresentation===undefined) ph.includeInPresentation=true; if(!ph.orientation&&ph.width&&ph.height) ph.orientation=ph.width>ph.height*1.08?'landscape':ph.height>ph.width*1.08?'portrait':'square'; if(!Number.isFinite(Number(ph.presentationOrder))) ph.presentationOrder=idx+1; });
+      p.photos.forEach((ph,idx)=>{ if(!ph.room||ph.room==='Geral') ph.room=UNASSIGNED_ROOM; if(!ph.label) ph.label='Fotografia'; if(ph.includeInPresentation===undefined) ph.includeInPresentation=true; if(!['auto','main','detail','technical','exclude'].includes(ph.presentationRole)) ph.presentationRole=ph.includeInPresentation===false?'exclude':'auto'; if(ph.presentationRole==='exclude')ph.includeInPresentation=false; if(!ph.orientation&&ph.width&&ph.height) ph.orientation=ph.width>ph.height*1.08?'landscape':ph.height>ph.width*1.08?'portrait':'square'; if(!Number.isFinite(Number(ph.presentationOrder))) ph.presentationOrder=idx+1; });
       normalizePhotoOrder(p);
       if(p.coverPhotoId && !p.photos.some(ph=>ph.id===p.coverPhotoId)) p.coverPhotoId=null;
       const fromPhotos=[...new Set(p.photos.map(ph=>ph.room).filter(r=>r&&r!==UNASSIGNED_ROOM))];
@@ -90,6 +90,8 @@
       if(p.presentationPreset==='architectural'&&p.presentationTemplate==='minimal')p.presentationTemplate='architectural';
       if(p.presentationPreset==='official'){p.presentationTemplate='official';p.presentationTheme='official';}
       p.presentationDensity=p.presentationDensity||'balanced';
+      p.presentationObjective=p.presentationObjective||'client';
+      p.presentationMode=p.presentationMode||'classic';
       p.presentationTitle=p.presentationTitle||p.name||'Projeto';
       p.presentationSubtitle=p.presentationSubtitle||[p.type,p.location].filter(Boolean).join(' • ')||'Proposta de interiores e mobiliário';
       p.presentationConcept=p.presentationConcept||p.notes||'Proposta de interiores desenvolvida para criar um espaço funcional, equilibrado e intemporal.';
@@ -418,6 +420,7 @@
     const unassigned=counts[UNASSIGNED_ROOM]?`<div class="room-manage-card"><button class="room-card muted-room" data-room="${UNASSIGNED_ROOM}"><div class="room-img no-room"></div><div class="room-name"><span>${UNASSIGNED_ROOM}</span><span>${counts[UNASSIGNED_ROOM]} foto(s)</span></div></button><div class="room-card-actions"><span class="room-hint">Fotografias ainda por classificar</span></div></div>`:'';
     return `<div class="section-title rooms-head"><div><h3>Divisões da casa</h3><small>Adiciona, altera ou elimina as divisões de cada projeto</small></div><button class="btn primary" id="addRoomBtn">+ Nova divisão</button></div><div class="room-manage-grid">${roomCards}${unassigned}</div>${!p.rooms.length?`<div class="empty">Ainda não existem divisões neste projeto.</div>`:''}`;
   }
+  function photoRoleLabel(role){return({auto:'Automática',main:'★ Principal',detail:'◎ Pormenor',technical:'⌑ Técnica',exclude:'× Não usar'})[role]||'Automática';}
   function photosHtml(p){
     const available=[...(p.rooms||[])]; if(p.photos.some(ph=>(ph.room||UNASSIGNED_ROOM)===UNASSIGNED_ROOM))available.push(UNASSIGNED_ROOM);
     const rooms=['Todas',...available];
@@ -426,19 +429,18 @@
     const visible=photoFilter==='Todas'?allOrdered:allOrdered.filter(ph=>(ph.room||UNASSIGNED_ROOM)===photoFilter);
     const selected=orderedPhotos(p,true), selectedCount=selected.length;
     const selectedPos=new Map(selected.map((ph,i)=>[ph.id,i+1]));
-    const tiles=visible.map(ph=>`<div class="photo-tile ${ph.includeInPresentation===false?'photo-excluded':''} ${p.coverPhotoId===ph.id?'photo-cover-selected':''}"><img src="${ph.data}" alt=""><div class="photo-status-row">${p.coverPhotoId===ph.id?'<span class="cover-badge">★ CAPA</span>':''}${ph.includeInPresentation===false?'<span class="exclude-badge">FORA DO PDF</span>':`<span class="include-badge">PDF #${selectedPos.get(ph.id)||''}</span>`}</div><div class="photo-actions"><button class="icon-btn" data-move-photo-up="${ph.id}" title="Mover antes no PDF" ${ph.includeInPresentation===false?'disabled':''}>←</button><button class="icon-btn" data-move-photo-down="${ph.id}" title="Mover depois no PDF" ${ph.includeInPresentation===false?'disabled':''}>→</button><button class="icon-btn" data-toggle-photo="${ph.id}" title="${ph.includeInPresentation===false?'Incluir no PDF':'Retirar do PDF'}">${ph.includeInPresentation===false?'＋':'✓'}</button><button class="icon-btn" data-cover-photo="${ph.id}" title="Usar como capa">★</button><button class="icon-btn" data-edit-photo="${ph.id}" title="Editar">✎</button><button class="icon-btn" data-classify-photo="${ph.id}" title="Divisão">▣</button><button class="icon-btn" data-del-photo="${ph.id}" title="Eliminar">×</button></div><div class="photo-label">${escapeHtml(ph.room||UNASSIGNED_ROOM)}</div></div>`).join('');
-    return `<div class="photo-toolbar"><div><h3 style="margin:0;font-size:20px">Fotografias</h3><small style="color:#726f6b;font-size:12px">Escolhe as imagens do PDF, define a capa e controla a ordem em que aparecem.</small><div class="pdf-photo-count"><strong>${selectedCount}</strong> de ${p.photos.length} fotografia(s) selecionada(s) para a apresentação</div></div><div><button class="btn" id="reorderPhotosBtn">⇅ Ordenar PDF</button> <button class="btn" id="includeAllPhotos">Todas no PDF</button> <button class="btn" id="manageRoomsPhotos">Gerir divisões</button> <button class="btn" id="generateFromPhotos">✦ Criar apresentação</button> <button class="btn primary" id="addPhotosBtn">+ Adicionar fotos</button></div></div><div class="filter-tabs">${rooms.map(r=>`<button data-photo-filter="${escapeHtml(r)}" class="${photoFilter===r?'active':''}">${escapeHtml(r)}${r==='Todas'?` (${p.photos.length})`:''}</button>`).join('')}</div><div class="photo-grid"><button class="add-photo-tile" id="addPhotoTile">▧<br>Tirar / adicionar foto</button>${tiles}</div>`;
+    const roleOpts=ph=>['auto','main','detail','technical','exclude'].map(r=>`<option value="${r}" ${ph.presentationRole===r?'selected':''}>${photoRoleLabel(r)}</option>`).join('');
+    const tiles=visible.map(ph=>`<div class="photo-tile ${ph.includeInPresentation===false?'photo-excluded':''} ${p.coverPhotoId===ph.id?'photo-cover-selected':''}"><img src="${ph.data}" alt=""><div class="photo-status-row">${p.coverPhotoId===ph.id?'<span class="cover-badge">★ CAPA</span>':''}${ph.includeInPresentation===false?'<span class="exclude-badge">FORA DO PDF</span>':`<span class="include-badge">PDF #${selectedPos.get(ph.id)||''}</span>`}</div><div class="photo-actions"><button class="icon-btn" data-move-photo-up="${ph.id}" title="Mover antes no PDF" ${ph.includeInPresentation===false?'disabled':''}>←</button><button class="icon-btn" data-move-photo-down="${ph.id}" title="Mover depois no PDF" ${ph.includeInPresentation===false?'disabled':''}>→</button><button class="icon-btn" data-cover-photo="${ph.id}" title="Usar como capa">★</button><button class="icon-btn" data-edit-photo="${ph.id}" title="Editar">✎</button><button class="icon-btn" data-classify-photo="${ph.id}" title="Divisão">▣</button><button class="icon-btn" data-del-photo="${ph.id}" title="Eliminar">×</button></div><div class="photo-label">${escapeHtml(ph.room||UNASSIGNED_ROOM)}</div><div class="photo-role-wrap"><span>Função na apresentação</span><select class="photo-role-select" data-photo-role="${ph.id}">${roleOpts(ph)}</select></div></div>`).join('');
+    return `<div class="photo-toolbar"><div><h3 style="margin:0;font-size:20px">Fotografias</h3><small style="color:#726f6b;font-size:12px">Classifica apenas quando quiseres ter controlo. A ADC Studio pode sugerir automaticamente as imagens principais, pormenores e imagens técnicas.</small><div class="pdf-photo-count"><strong>${selectedCount}</strong> de ${p.photos.length} fotografia(s) disponíveis para a apresentação</div></div><div><button class="btn" id="reorderPhotosBtn">⇅ Ordenar</button> <button class="btn" id="includeAllPhotos">Repor todas</button> <button class="btn" id="manageRoomsPhotos">Gerir divisões</button> <button class="btn primary" id="generateFromPhotos">✦ Criar apresentação profissional</button> <button class="btn" id="addPhotosBtn">+ Adicionar fotos</button></div></div><div class="curation-hint"><b>Curadoria:</b> ★ Principal abre o ambiente; ◎ Pormenor cria páginas de detalhe; ⌑ Técnica é tratada como planta/desenho; × Não usar fica fora do PDF.</div><div class="filter-tabs">${rooms.map(r=>`<button data-photo-filter="${escapeHtml(r)}" class="${photoFilter===r?'active':''}">${escapeHtml(r)}${r==='Todas'?` (${p.photos.length})`:''}</button>`).join('')}</div><div class="photo-grid"><button class="add-photo-tile" id="addPhotoTile">▧<br>Tirar / adicionar foto</button>${tiles}</div>`;
   }
   function presentationHtml(p){
     const pg=p.pages[0];
-    const selectedCount=p.photos.filter(ph=>ph.includeInPresentation!==false).length;
-    const modelLabel=({official:'ADC Oficial',signature:'ADC Signature',editorial:'Editorial Interior',gallery:'Galeria Premium',architectural:'Arquitetura',catalog:'Catálogo Cliente',premium:'ADC Signature',minimal:'Minimal Claro'})[p.presentationTemplate]||'ADC Oficial';
-    const visualTheme=themeInfo(p.presentationTheme||'official').label;
-    const presetLabel=({official:'ADC Oficial',signature:'ADC Signature',editorial:'Editorial Interior',gallery:'Galeria Premium',architectural:'Arquitetura',catalog:'Catálogo Cliente'})[p.presentationPreset]||'ADC Oficial';
-    const densityLabel=({compact:'Compacta',balanced:'Equilibrada',detailed:'Detalhada'})[p.presentationDensity]||'Equilibrada';
-    return `<div class="section-title"><h3>Apresentação automática</h3><small>${selectedCount} imagem(ns) selecionada(s) • ${p.pages.length} página(s)</small></div>
-      <section class="auto-present-card"><div class="auto-present-copy"><div class="auto-kicker">ADC STUDIO • FLUXO AUTOMÁTICO</div><h2>Coloca as imagens. A ADC Studio monta o resto.</h2><p>Escolhe um modelo pronto e a aplicação define automaticamente a capa, o estilo, a quantidade de imagens por página e a sequência visual. Depois só precisas de pré-visualizar e gerar o PDF.</p><div class="auto-steps"><span><b>1</b> Adicionar imagens</span><span><b>2</b> Escolher modelo</span><span><b>3</b> Gerar PDF</span></div><div class="auto-actions"><button class="btn primary big" id="autoGenerate">✦ Criar apresentação automaticamente</button><button class="btn" id="presentationBriefBtn">✎ Dados do PDF</button><button class="btn" id="addPhotosFromPresentation">+ Adicionar imagens</button></div><div class="auto-current">Modelo: <strong>${presetLabel}</strong> &nbsp;•&nbsp; Ritmo: <strong>${densityLabel}</strong> &nbsp;•&nbsp; Estilo: <strong>${visualTheme}</strong></div></div><div class="auto-present-preview">${slideHtml(p,pg)}</div></section>
-      <div class="section-title"><h3>Pré-visualização e ajustes</h3><small>Opcional</small></div><div class="overview-grid"><div class="export-preview">${slideHtml(p,pg)}</div><aside class="detail-card"><h3>Apresentação do cliente</h3><p style="font-size:11px;color:#777;line-height:1.6">A apresentação é criada automaticamente. Se quiseres, podes depois alterar uma página, trocar uma imagem ou mudar a ordem.</p><div style="display:grid;gap:8px;margin-top:16px"><button class="btn" id="openBuilder">Ajustar páginas</button><button class="btn" id="startPresentation">Modo apresentação</button><button class="btn primary" id="printPdf">Gerar PDF agora</button></div></aside></div>`;
+    const selectedCount=p.photos.filter(ph=>ph.includeInPresentation!==false&&ph.presentationRole!=='exclude').length;
+    const objectiveLabel=({client:'Apresentar ao cliente',project:'Apresentação de projeto',technical:'Apresentação técnica'})[p.presentationObjective]||'Apresentar ao cliente';
+    const isPro=p.presentationMode==='professional';
+    return `<div class="section-title"><h3>${isPro?'Apresentação profissional':'Apresentação'}</h3><small>${selectedCount} imagem(ns) disponíveis • ${p.pages.length} página(s)</small></div>
+      <section class="auto-present-card pro-present-card"><div class="auto-present-copy"><div class="auto-kicker">ADC STUDIO 3.0 • CURADORIA PROFISSIONAL</div><h2>Uma apresentação pensada página a página.</h2><p>A ADC Studio organiza as imagens por ambiente, escolhe uma imagem principal, separa pormenores e desenhos técnicos e cria um ritmo visual mais próximo de uma apresentação feita por um profissional.</p><div class="auto-steps"><span><b>1</b> Sugerir seleção</span><span><b>2</b> Rever funções</span><span><b>3</b> Criar apresentação</span></div><div class="auto-actions"><button class="btn primary big" id="autoGenerate">✦ Criar apresentação profissional</button><button class="btn" id="presentationBriefBtn">✎ Dados do PDF</button><button class="btn" id="addPhotosFromPresentation">+ Adicionar imagens</button></div><div class="auto-current">Objetivo: <strong>${objectiveLabel}</strong> &nbsp;•&nbsp; Identidade: <strong>ADC Oficial</strong> &nbsp;•&nbsp; Modo: <strong>${isPro?'Profissional':'Clássico'}</strong></div></div><div class="auto-present-preview">${slideHtml(p,pg)}</div></section>
+      <div class="section-title"><h3>Pré-visualização e ajustes</h3><small>O PDF usa a mesma sequência</small></div><div class="overview-grid"><div class="export-preview">${slideHtml(p,pg)}</div><aside class="detail-card"><h3>Apresentação do cliente</h3><p style="font-size:11px;color:#777;line-height:1.6">Podes aceitar a proposta automática ou ajustar páginas e imagens antes de gerar o PDF final.</p><div style="display:grid;gap:8px;margin-top:16px"><button class="btn" id="openBuilder">Ajustar páginas</button><button class="btn" id="startPresentation">Modo apresentação</button><button class="btn primary" id="printPdf">Gerar PDF agora</button></div></aside></div>`;
   }
   function reorderPhotosModal(p){
     const list=orderedPhotos(p,true);
@@ -491,7 +493,8 @@
     qsa('[data-delete-room]').forEach(b=>b.onclick=e=>{e.stopPropagation();deleteRoom(p,b.dataset.deleteRoom);});
     qsa('[data-photo-filter]').forEach(b=>b.onclick=()=>{photoFilter=b.dataset.photoFilter;renderProject();});
     const gfp=qs('#generateFromPhotos'); if(gfp) gfp.onclick=()=>autoPresentationModal(p);
-    const allPdf=qs('#includeAllPhotos'); if(allPdf) allPdf.onclick=()=>{p.photos.forEach(ph=>ph.includeInPresentation=true);normalizePhotoOrder(p);save();renderProject();toast('Todas as fotografias foram incluídas na apresentação.');};
+    const allPdf=qs('#includeAllPhotos'); if(allPdf) allPdf.onclick=()=>{p.photos.forEach(ph=>{ph.includeInPresentation=true;ph.presentationRole='auto';});normalizePhotoOrder(p);save();renderProject();toast('Seleção reposta. A ADC Studio volta a decidir automaticamente.');};
+    qsa('[data-photo-role]').forEach(s=>s.onchange=()=>{const ph=photoById(p,s.dataset.photoRole);if(!ph)return;ph.presentationRole=s.value;ph.includeInPresentation=s.value!=='exclude';if(s.value==='main'){p.coverPhotoId=ph.id;}else if(s.value==='exclude'&&p.coverPhotoId===ph.id){p.coverPhotoId=null;}normalizePhotoOrder(p);save();renderProject();});
     const reorderBtn=qs('#reorderPhotosBtn'); if(reorderBtn) reorderBtn.onclick=()=>reorderPhotosModal(p);
     qsa('[data-move-photo-up]').forEach(b=>b.onclick=()=>{movePhotoInPresentation(p,b.dataset.movePhotoUp,-1);renderProject();});
     qsa('[data-move-photo-down]').forEach(b=>b.onclick=()=>{movePhotoInPresentation(p,b.dataset.movePhotoDown,1);renderProject();});
@@ -618,7 +621,7 @@
     if(!builderPageId||!p.pages.some(pg=>pg.id===builderPageId))builderPageId=p.pages[0].id;
     const active=p.pages.find(pg=>pg.id===builderPageId)||p.pages[0];
     const thumbs=p.pages.map((pg,i)=>{const ph=pg.photoId?photoById(p,pg.photoId):p.photos[0];return `<div class="page-thumb ${pg.id===active.id?'active':''}" data-page-id="${pg.id}"><div class="mini" style="${ph?`background-image:url('${ph.data}')`:`background-image:url('${coverOf(p,i)}')`}"></div><small>${i+1}. ${labelLayout(pg.layout)}</small><div class="page-order-actions"><button data-page-up="${pg.id}" title="Mover página para cima" ${i===0?'disabled':''}>↑</button><button data-page-down="${pg.id}" title="Mover página para baixo" ${i===p.pages.length-1?'disabled':''}>↓</button></div></div>`;}).join('');
-    app.innerHTML=`<div class="builder-shell"><div class="builder-top"><div style="display:flex;align-items:center;gap:10px"><button class="tooltop" id="backBuilder">←</button><span style="font-size:11px;color:#777">${escapeHtml(p.name)}</span></div><div style="display:flex;gap:4px"><button class="tooltop" id="editPage">T &nbsp;Texto</button><button class="tooltop" id="editPageImage">▧ &nbsp;Imagem</button><button class="tooltop" id="addLayout">▦ &nbsp;Layouts</button><button class="tooltop" id="themes">◇ &nbsp;Temas</button></div><div style="display:flex;gap:7px"><button class="btn" id="previewPresentation">Pré-visualizar</button><button class="btn primary" id="printBuilder">Guardar / PDF</button></div></div><div class="builder-layout"><aside class="pages-panel">${thumbs}<button class="btn small" style="width:100%" id="addPage">+ Adicionar página</button></aside><main class="builder-main"><div class="builder-stage" id="builderStage">${slideHtml(p,active)}</div><div class="builder-bottom">${['officialCover','officialServices','officialBrief','officialSection','officialFull','officialPair','officialStrip','officialContact','cover','brief','one','two','portraitPair','mixed','three','four','text','moodboard','beforeafter','section','details','contact'].map(l=>`<button class="layout-chip ${active.layout===l?'active':''}" data-layout="${l}">${labelLayout(l)}</button>`).join('')}</div></main></div></div>`;
+    app.innerHTML=`<div class="builder-shell"><div class="builder-top"><div style="display:flex;align-items:center;gap:10px"><button class="tooltop" id="backBuilder">←</button><span style="font-size:11px;color:#777">${escapeHtml(p.name)}</span></div><div style="display:flex;gap:4px"><button class="tooltop" id="editPage">T &nbsp;Texto</button><button class="tooltop" id="editPageImage">▧ &nbsp;Imagem</button><button class="tooltop" id="addLayout">▦ &nbsp;Layouts</button><button class="tooltop" id="themes">◇ &nbsp;Temas</button></div><div style="display:flex;gap:7px"><button class="btn" id="previewPresentation">Pré-visualizar</button><button class="btn primary" id="printBuilder">Guardar / PDF</button></div></div><div class="builder-layout"><aside class="pages-panel">${thumbs}<button class="btn small" style="width:100%" id="addPage">+ Adicionar página</button></aside><main class="builder-main"><div class="builder-stage" id="builderStage">${slideHtml(p,active)}</div><div class="builder-bottom">${['officialCover','officialServices','officialBrief','officialSection','officialFull','officialPair','officialStrip','officialContact','proHero','proDuo','proDetail','proTechnical','cover','brief','one','two','portraitPair','mixed','three','four','text','moodboard','beforeafter','section','details','contact'].map(l=>`<button class="layout-chip ${active.layout===l?'active':''}" data-layout="${l}">${labelLayout(l)}</button>`).join('')}</div></main></div></div>`;
     qs('#backBuilder').onclick=()=>go('project',p.id,'presentation');
     qs('#previewPresentation').onclick=()=>startPresentation(p);
     qs('#printBuilder').onclick=()=>printProject(p);
@@ -633,9 +636,9 @@
     qsa('[data-page-down]').forEach(b=>b.onclick=e=>{e.stopPropagation();movePage(p,b.dataset.pageDown,1);builderPageId=b.dataset.pageDown;renderBuilder();});
     qsa('[data-layout]').forEach(b=>b.onclick=()=>{active.layout=b.dataset.layout;active.photoId=active.photoId||p.photos[0]?.id||null;save();renderBuilder();});
   }
-  function labelLayout(l){return({officialCover:'Capa oficial',officialServices:'Serviços',officialBrief:'Ficha oficial',officialSection:'Visualização 3D',officialFull:'Imagem total',officialPair:'Composição 2',officialStrip:'Mosaico final',officialContact:'Contactos oficiais',cover:'Capa',one:'Uma imagem',two:'Duas imagens',portraitPair:'Duas verticais',mixed:'Destaque + 2',three:'Três imagens',four:'Quatro imagens',text:'Imagem + texto',moodboard:'Moodboard',beforeafter:'Antes e depois',section:'Separador',details:'Detalhes',brief:'Ficha do projeto',contact:'Contactos'})[l]||l;}
+  function labelLayout(l){return({officialCover:'Capa oficial',officialServices:'Serviços',officialBrief:'Ficha oficial',officialSection:'Visualização 3D',officialFull:'Imagem total',officialPair:'Composição 2',officialStrip:'Mosaico final',officialContact:'Contactos oficiais',proHero:'Profissional — destaque',proDuo:'Profissional — duas vistas',proDetail:'Profissional — pormenor',proTechnical:'Profissional — técnico',cover:'Capa',one:'Uma imagem',two:'Duas imagens',portraitPair:'Duas verticais',mixed:'Destaque + 2',three:'Três imagens',four:'Quatro imagens',text:'Imagem + texto',moodboard:'Moodboard',beforeafter:'Antes e depois',section:'Separador',details:'Detalhes',brief:'Ficha do projeto',contact:'Contactos'})[l]||l;}
   function layoutModal(p,isNew,pg=null){
-    const layouts=['officialCover','officialServices','officialBrief','officialSection','officialFull','officialPair','officialStrip','officialContact','cover','brief','one','two','portraitPair','mixed','three','four','text','moodboard','beforeafter','section','details','contact'];
+    const layouts=['officialCover','officialServices','officialBrief','officialSection','officialFull','officialPair','officialStrip','officialContact','proHero','proDuo','proDetail','proTechnical','cover','brief','one','two','portraitPair','mixed','three','four','text','moodboard','beforeafter','section','details','contact'];
     modal(`<h3>${isNew?'Escolher modelo de página':'Alterar modelo'}</h3><div class="layout-picker">${layouts.map(l=>`<button class="layout-card" data-pick-layout="${l}"><div class="shape"></div><span>${labelLayout(l)}</span></button>`).join('')}</div><div class="modal-actions"><button class="btn" data-close>Cancelar</button></div>`);
     qsa('[data-pick-layout]').forEach(b=>b.onclick=()=>{const l=b.dataset.pickLayout;if(isNew){const n={id:uid(),layout:l,title:l==='cover'?p.name:'Nova página',subtitle:'',photoId:p.photos[0]?.id||null,photo2Id:p.photos[1]?.id||null,photo3Id:p.photos[2]?.id||null,photo4Id:p.photos[3]?.id||null};p.pages.push(n);builderPageId=n.id;}else{pg.layout=l;}save();closeModal();renderBuilder();});
   }
@@ -692,6 +695,10 @@
     if(pg.layout==='officialPair')return `<div class="slide official-light official-pair">${officialBrandHtml('corner')}<div class="official-pair-left"><img src="${img1}" alt=""></div><div class="official-pair-right"><img src="${img2}" alt=""></div></div>`;
     if(pg.layout==='officialStrip'){const imgs=[img1,img2,img3,img4,pg.photo5Id?photoById(p,pg.photo5Id)?.data:null].filter(Boolean);return `<div class="slide official-light official-strip">${officialBrandHtml('corner')}<div class="official-strip-grid count-${imgs.length}">${imgs.map(src=>`<img src="${src}" alt="">`).join('')}</div><div class="official-rights">${escapeHtml(md.stripRights||'')}</div></div>`;}
     if(pg.layout==='officialContact'){const contact=(name,role,phone)=>name||role||phone?`<div class="official-contact-person"><b>${escapeHtml(name||'')}</b><span>${escapeHtml(role||'')}</span><span>${escapeHtml(phone||'')}</span></div>`:'';return `<div class="slide official-light official-contact"><div class="official-contact-brand">${officialBrandHtml('contact')}</div><div class="official-contact-details"><div>${co.email?`<span>${escapeHtml(co.email)}</span>`:''}${co.phone?`<span>${escapeHtml(co.phone)}</span>`:''}${co.address?`<span>${escapeHtml(co.address)}</span>`:''}${co.website?`<span>${escapeHtml(co.website)}</span>`:''}</div><div class="official-contact-people">${contact(co.contact1Name,co.contact1Role,co.contact1Phone)}${contact(co.contact2Name,co.contact2Role,co.contact2Phone)}</div></div></div>`;}
+    if(pg.layout==='proHero')return `<div class="slide official-light pro-slide pro-hero">${officialBrandHtml('corner')}<div class="pro-slide-head"><small>${escapeHtml(pg.subtitle||'IMAGEM PRINCIPAL')}</small><h2>${escapeHtml(pg.title||'Visualização')}</h2></div><div class="pro-hero-frame"><img src="${img1}" alt=""></div></div>`;
+    if(pg.layout==='proDuo')return `<div class="slide official-light pro-slide pro-duo">${officialBrandHtml('corner')}<div class="pro-slide-head"><small>${escapeHtml(pg.subtitle||'DUAS PERSPETIVAS')}</small><h2>${escapeHtml(pg.title||'Visualização')}</h2></div><div class="pro-duo-grid"><div><img src="${img1}" alt=""></div><div><img src="${img2}" alt=""></div></div></div>`;
+    if(pg.layout==='proDetail')return `<div class="slide official-light pro-slide pro-detail">${officialBrandHtml('corner')}<div class="pro-slide-head"><small>${escapeHtml(pg.subtitle||'PORMENOR EM DESTAQUE')}</small><h2>${escapeHtml(pg.title||'Pormenores')}</h2></div><div class="pro-detail-main"><img src="${img1}" alt=""></div><div class="pro-detail-side"><div class="pro-detail-label">DETALHE</div><img src="${img2}" alt=""></div></div>`;
+    if(pg.layout==='proTechnical')return `<div class="slide official-light pro-slide pro-technical">${officialBrandHtml('corner')}<div class="pro-slide-head"><small>${escapeHtml(pg.subtitle||'PLANTA / DESENHO TÉCNICO')}</small><h2>${escapeHtml(pg.title||'Documento técnico')}</h2></div><div class="pro-technical-frame"><img src="${img1}" alt=""></div></div>`;
     if(pg.layout==='cover')return `<div class="slide cover-slide ${themeClass}">${slideBrand('cover')}<img class="photo-big" src="${img1}"><div class="title-block"><div class="eyebrow">PROPOSTA DE INTERIORES</div><h2>${escapeHtml(pg.title||p.presentationTitle||p.name)}</h2><p>${escapeHtml(pg.subtitle||p.presentationSubtitle||p.type||'')}</p></div><div class="foot">DESIGN • MOBILIÁRIO • PESSOAS</div></div>`;
     if(pg.layout==='brief'){const pts=(pg.points||p.presentationPoints||[]).filter(Boolean);return `<div class="slide brief-slide ${themeClass}">${slideBrand()}<div class="brief-left"><div class="brief-kicker">CLIENTE</div><h3>${escapeHtml(p.client||'Projeto')}</h3><div class="brief-meta"><b>${escapeHtml(p.type||'Interiores')}</b><span>${escapeHtml(p.location||'')}</span></div></div><div class="brief-right"><div class="eyebrow">PONTOS PRINCIPAIS</div><h2>${escapeHtml(pg.title||p.presentationTitle||p.name)}</h2><p>${escapeHtml(pg.subtitle||p.presentationConcept||'')}</p>${pts.length?`<ul>${pts.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}</ul>`:''}</div></div>`;}
     if(pg.layout==='section')return `<div class="slide section-slide ${themeClass}">${slideBrand()}<div class="section-slide-copy"><div class="eyebrow">ADC STUDIO</div><h2>${escapeHtml(pg.title||'Ambiente')}</h2><div class="section-rule"></div><p>${escapeHtml(pg.subtitle||'Seleção visual do ambiente')}</p></div></div>`;
@@ -725,50 +732,60 @@
   }
   function printProjectFallback(p){let root=qs('#printRoot');if(root)root.remove();root=document.createElement('div');root.id='printRoot';root.className='print-root';root.innerHTML=p.pages.map(pg=>`<section class="print-slide">${slideHtml(p,pg)}</section>`).join('');document.body.appendChild(root);setTimeout(()=>window.print(),150);}
 
-  function autoPresentationModal(p){
-    if(!p.photos.length){toast('Adiciona primeiro as imagens do projeto.');return;}
-    const current=p.presentationTemplate||'official';
-    const currentTheme=p.presentationTheme||'official';
-    const currentPreset=p.presentationPreset||'official';
-    const currentDensity=p.presentationDensity||'balanced';
-    modal(`<div class="auto-modal-head"><div><div class="auto-kicker">GERAÇÃO AUTOMÁTICA</div><h3>Criar apresentação</h3><p>O modelo oficial ADC Studio é o padrão aprovado. Basta selecionar as imagens e gerar.</p></div></div>
-      <div class="auto-subtitle">Modelos prontos</div>
-      <div class="preset-grid preset-grid-v15">
-        <button class="preset-card official-preset ${currentPreset==='official'?'selected':''}" data-preset="official" data-template-preset="official" data-theme-preset="official"><div class="preset-hero preset-official"><i></i><i></i><i></i><i></i><i></i></div><b>ADC Oficial <em>OFICIAL</em></b><small>Modelo aprovado: igual à apresentação de referência</small></button>
-        <button class="preset-card ${currentPreset==='signature'?'selected':''}" data-preset="signature" data-template-preset="signature" data-theme-preset="warm"><div class="preset-hero preset-signature"><i></i><i></i><i></i></div><b>ADC Signature</b><small>Alternativa equilibrada</small></button>
-        <button class="preset-card ${currentPreset==='editorial'?'selected':''}" data-preset="editorial" data-template-preset="editorial" data-theme-preset="editorial"><div class="preset-hero preset-editorial"><i></i><i></i><i></i></div><b>Editorial Interior</b><small>Visual de revista premium</small></button>
-        <button class="preset-card ${currentPreset==='gallery'?'selected':''}" data-preset="gallery" data-template-preset="gallery" data-theme-preset="gallery"><div class="preset-hero preset-gallery"><i></i><i></i><i></i></div><b>Galeria Premium</b><small>Máximo destaque às fotografias</small></button>
-        <button class="preset-card ${currentPreset==='architectural'?'selected':''}" data-preset="architectural" data-template-preset="architectural" data-theme-preset="architectural"><div class="preset-hero preset-architectural"><i></i><i></i><i></i></div><b>Arquitetura</b><small>Limpo, claro e técnico</small></button>
-        <button class="preset-card ${currentPreset==='catalog'?'selected':''}" data-preset="catalog" data-template-preset="catalog" data-theme-preset="warm"><div class="preset-hero preset-catalog"><i></i><i></i><i></i><i></i></div><b>Catálogo Cliente</b><small>Compacto e objetivo</small></button>
-      </div>
-      <div class="auto-subtitle">Quantidade de detalhe</div>
-      <div class="density-grid">
-        <button class="density-card ${currentDensity==='compact'?'selected':''}" data-density="compact"><b>Compacta</b><small>Mais imagens por página</small></button>
-        <button class="density-card ${currentDensity==='balanced'?'selected':''}" data-density="balanced"><b>Equilibrada</b><small>Recomendada para clientes</small></button>
-        <button class="density-card ${currentDensity==='detailed'?'selected':''}" data-density="detailed"><b>Detalhada</b><small>Mais páginas e imagens maiores</small></button>
-      </div>
-      <details class="advanced-presentation"><summary>Opções avançadas</summary>
-        <div class="auto-options"><label><input type="checkbox" id="autoIntro" checked> Incluir ficha do projeto</label><label><input type="checkbox" id="autoGroup"> Separar por divisões (não recomendado no modelo oficial)</label><label><input type="checkbox" id="autoOptimize" checked> Adaptar layouts a imagens verticais/horizontais</label><label><input type="checkbox" id="autoNoRepeat" checked> Evitar repetir a imagem da capa</label><label><input type="checkbox" id="autoEnd" checked> Incluir página final</label></div>
-      </details>
-      <div class="auto-summary"><span>Imagens selecionadas: <b>${p.photos.filter(ph=>ph.includeInPresentation!==false).length}</b></span><span>Projeto: <b>${escapeHtml(p.name)}</b></span><span>Saída: <b>PDF panorâmico 16:9</b></span></div>
-      <div class="modal-actions auto-modal-actions"><button class="btn" data-close>Cancelar</button><button class="btn" id="confirmAuto">✦ Gerar apresentação</button><button class="btn primary big" id="confirmAutoPdf">✦ Gerar + PDF</button></div>`);
-    let chosen=current,chosenTheme=currentTheme,chosenPreset=currentPreset,chosenDensity=currentDensity;
-    qsa('[data-preset]').forEach(b=>b.onclick=()=>{
-      chosenPreset=b.dataset.preset;chosen=b.dataset.templatePreset;chosenTheme=b.dataset.themePreset;
-      qsa('[data-preset]').forEach(x=>x.classList.toggle('selected',x===b));
-      if(chosenPreset==='official'){const grp=qs('#autoGroup');if(grp)grp.checked=false;}
-    });
-    qsa('[data-density]').forEach(b=>b.onclick=()=>{chosenDensity=b.dataset.density;qsa('[data-density]').forEach(x=>x.classList.toggle('selected',x===b));});
-    const run=async(downloadPdf=false)=>{
-      if(!p.photos.some(ph=>ph.includeInPresentation!==false))return toast('Seleciona pelo menos uma fotografia para a apresentação.');
-      const opts={intro:qs('#autoIntro')?.checked!==false,group:qs('#autoGroup')?.checked===true,optimize:qs('#autoOptimize')?.checked!==false,noRepeat:qs('#autoNoRepeat')?.checked!==false,end:qs('#autoEnd')?.checked!==false,density:chosenDensity};
-      if(p.pages.length>1&&!confirm('Substituir a apresentação atual pela nova apresentação automática?'))return;
-      p.presentationTheme=chosenTheme;p.presentationPreset=chosenPreset;p.presentationDensity=chosenDensity;p.presentationTemplate=chosen;autoGeneratePresentation(p,chosen,opts);closeModal();builderPageId=p.pages[0]?.id||null;save();toast(`Apresentação criada: ${p.pages.length} páginas.`);go('project',p.id,'presentation');
-      if(downloadPdf){await new Promise(r=>setTimeout(r,120));await printProject(p);}
-    };
-    qs('#confirmAuto').onclick=()=>run(false);
-    qs('#confirmAutoPdf').onclick=()=>run(true);
+  function objectiveMeta(id){return({
+    client:{label:'Apresentar ao cliente',desc:'Mais emocional e visual. Menos imagens, mais impacto e pormenores.',icon:'✦'},
+    project:{label:'Apresentação de projeto',desc:'Equilíbrio entre conceito, ambientes, vistas gerais e detalhes.',icon:'▦'},
+    technical:{label:'Apresentação técnica',desc:'Plantas, cotas e desenhos completos, com margens generosas.',icon:'⌑'}
+  })[id]||{label:'Apresentar ao cliente',desc:'',icon:'✦'};}
+  function isTechnicalPhoto(ph){const s=`${ph.name||''} ${ph.label||''} ${ph.room||''}`.toLowerCase();return /(planta|corte|al[cç]ado|medida|cota|desenho|t[eé]cnic|layout|implant)/.test(s);}
+  function suggestProfessionalRoles(p,objective='client'){
+    p.photos.forEach(ph=>{ph.presentationRole=isTechnicalPhoto(ph)?'technical':'auto';ph.includeInPresentation=true;});
+    const groups=new Map();orderedPhotos(p,false).forEach(ph=>{const k=(ph.room&&ph.room!==UNASSIGNED_ROOM)?ph.room:'Projeto';if(!groups.has(k))groups.set(k,[]);groups.get(k).push(ph);});
+    for(const [,arr] of groups){
+      const visual=arr.filter(ph=>ph.presentationRole!=='technical');
+      if(!visual.length)continue;
+      let main=(p.coverPhotoId&&visual.find(x=>x.id===p.coverPhotoId))||visual.find(x=>photoShape(x)==='landscape')||visual[0];
+      if(main){main.presentationRole='main';main.includeInPresentation=true;if(!p.coverPhotoId)p.coverPhotoId=main.id;}
+      const remaining=visual.filter(x=>x!==main);
+      const detailMax=objective==='client'?2:objective==='project'?2:1;
+      remaining.filter(x=>photoShape(x)!=='landscape').slice(0,detailMax).forEach(x=>x.presentationRole='detail');
+      const maxPerRoom=objective==='client'?8:objective==='project'?12:20;
+      visual.slice(maxPerRoom).forEach(x=>{if(x.presentationRole==='auto'){x.presentationRole='exclude';x.includeInPresentation=false;}});
+    }
+    if(objective==='technical')p.photos.forEach(ph=>{if(ph.presentationRole==='detail')ph.presentationRole='auto';ph.includeInPresentation=ph.presentationRole!=='exclude';});
+    p.presentationObjective=objective;save();
   }
+  function professionalPresentationModal(p,initialObjective=null){
+    if(!p.photos.length){toast('Adiciona primeiro as imagens do projeto.');return;}
+    let objective=initialObjective||p.presentationObjective||'client';
+    const render=()=>{
+      closeModal();
+      const roles={main:0,detail:0,technical:0,exclude:0,auto:0};p.photos.forEach(ph=>roles[ph.presentationRole||'auto']++);
+      const objectiveCards=['client','project','technical'].map(id=>{const m=objectiveMeta(id);return `<button class="pro-objective ${objective===id?'selected':''}" data-objective="${id}"><span>${m.icon}</span><b>${m.label}</b><small>${m.desc}</small></button>`;}).join('');
+      const review=p.photos.map(ph=>`<div class="pro-review-row"><img src="${ph.data}" alt=""><div><b>${escapeHtml(ph.room||UNASSIGNED_ROOM)}</b><small>${escapeHtml(ph.name||'Fotografia')}</small></div><select data-pro-role="${ph.id}">${['auto','main','detail','technical','exclude'].map(r=>`<option value="${r}" ${ph.presentationRole===r?'selected':''}>${photoRoleLabel(r)}</option>`).join('')}</select></div>`).join('');
+      modal(`<div class="auto-modal-head pro-modal-head"><div><div class="auto-kicker">ADC STUDIO 3.0</div><h3>Criar apresentação profissional</h3><p>Escolhe apenas o objetivo. A identidade visual continua a ser ADC Oficial; a composição muda página a página conforme as imagens.</p></div></div>
+        <div class="auto-subtitle">1. Objetivo da apresentação</div><div class="pro-objective-grid">${objectiveCards}</div>
+        <div class="pro-curation-bar"><div><b>2. Curadoria das imagens</b><span>★ ${roles.main} principais &nbsp;•&nbsp; ◎ ${roles.detail} pormenores &nbsp;•&nbsp; ⌑ ${roles.technical} técnicas &nbsp;•&nbsp; × ${roles.exclude} fora</span></div><button class="btn primary" id="suggestCuration">✦ Sugerir seleção profissional</button></div>
+        <details class="pro-review"><summary>Rever / alterar a seleção das imagens</summary><div class="pro-review-list">${review}</div></details>
+        <div class="pro-note"><b>Nota:</b> esta versão faz curadoria local, sem enviar fotografias para a Internet. A análise visual por IA poderá ser acrescentada depois como opção.</div>
+        <div class="modal-actions auto-modal-actions"><button class="btn" data-close>Cancelar</button><button class="btn" id="confirmProfessional">Criar apresentação</button><button class="btn primary big" id="confirmProfessionalPdf">Criar + PDF</button></div>`);
+      qsa('[data-objective]').forEach(b=>b.onclick=()=>{objective=b.dataset.objective;p.presentationObjective=objective;save();render();});
+      qs('#suggestCuration').onclick=()=>{suggestProfessionalRoles(p,objective);render();toast('Seleção profissional sugerida. Podes alterar qualquer imagem.');};
+      qsa('[data-pro-role]').forEach(s=>s.onchange=()=>{const ph=photoById(p,s.dataset.proRole);if(!ph)return;ph.presentationRole=s.value;ph.includeInPresentation=s.value!=='exclude';if(s.value==='main')p.coverPhotoId=ph.id;else if(s.value==='exclude'&&p.coverPhotoId===ph.id)p.coverPhotoId=null;save();render();});
+      const run=async(downloadPdf=false)=>{
+        const selected=p.photos.filter(ph=>ph.includeInPresentation!==false&&ph.presentationRole!=='exclude');
+        if(!selected.length)return toast('Seleciona pelo menos uma imagem.');
+        if(!selected.some(ph=>ph.presentationRole==='main')){const first=selected.find(ph=>photoShape(ph)==='landscape')||selected[0];if(first){first.presentationRole='main';p.coverPhotoId=first.id;}}
+        if(p.pages.length>1&&!confirm('Substituir a apresentação atual pela nova apresentação profissional?'))return;
+        p.presentationObjective=objective;p.presentationMode='professional';p.presentationTheme='official';p.presentationPreset='official';p.presentationTemplate='professional';
+        autoGenerateProfessionalPresentation(p,objective);closeModal();builderPageId=p.pages[0]?.id||null;save();toast(`Apresentação profissional criada: ${p.pages.length} páginas.`);go('project',p.id,'presentation');
+        if(downloadPdf){await new Promise(r=>setTimeout(r,120));await printProject(p);}
+      };
+      qs('#confirmProfessional').onclick=()=>run(false);qs('#confirmProfessionalPdf').onclick=()=>run(true);
+    };
+    render();
+  }
+  function autoPresentationModal(p){professionalPresentationModal(p);}
 
   function pickCoverPhoto(photos){return photos.find(ph=>photoShape(ph)==='landscape')||photos[0]||null;}
   function takePhoto(arr,pred){const idx=arr.findIndex(pred);if(idx<0)return null;return arr.splice(idx,1)[0];}
@@ -828,6 +845,36 @@
     if(list.length>=3){const take=list.splice(0,3);return make('mixed',take);}
     if(list.length===2)return two();
     return one();
+  }
+
+  function autoGenerateProfessionalPresentation(p,objective='client'){
+    const all=orderedPhotos(p,false).filter(ph=>ph.includeInPresentation!==false&&ph.presentationRole!=='exclude');
+    const cover=(p.coverPhotoId&&all.find(ph=>ph.id===p.coverPhotoId))||all.find(ph=>ph.presentationRole==='main')||pickCoverPhoto(all);
+    const pages=[{id:uid(),layout:'officialCover',title:p.presentationTitle||p.name}];
+    if(objective==='client')pages.push({id:uid(),layout:'officialServices',title:'Serviços'});
+    pages.push({id:uid(),layout:'officialBrief',title:p.presentationTitle||p.name,subtitle:p.presentationConcept||p.notes||'Proposta de layout do espaço e decoração.',points:[...(p.presentationPoints||[])]});
+    const roomOrder=[...(p.rooms||[])];const map=new Map();
+    all.forEach(ph=>{const key=(ph.room&&ph.room!==UNASSIGNED_ROOM)?ph.room:'Projeto';if(!map.has(key))map.set(key,[]);map.get(key).push(ph);});
+    const groups=[];roomOrder.forEach(r=>{if(map.has(r))groups.push([r,map.get(r)]);});if(map.has('Projeto'))groups.push(['Projeto',map.get('Projeto')]);for(const [k,v] of map){if(k!=='Projeto'&&!roomOrder.includes(k))groups.push([k,v]);}
+    groups.forEach(([room,arr])=>{
+      if(!arr.length)return;pages.push({id:uid(),layout:'officialSection',title:room==='Projeto'?'Visualização 3D':room});
+      if(objective==='technical'){
+        const ordered=[...arr].sort((a,b)=>(a.presentationRole==='technical'?-1:0)-(b.presentationRole==='technical'?-1:0));
+        ordered.forEach(ph=>pages.push({id:uid(),layout:'proTechnical',title:room==='Projeto'?'Documento técnico':room,photoId:ph.id,subtitle:ph.presentationRole==='technical'?'PLANTA / DESENHO TÉCNICO':'VISTA DE PROJETO'}));return;
+      }
+      const main=arr.find(ph=>ph.presentationRole==='main')||arr.find(ph=>photoShape(ph)==='landscape')||arr[0];
+      const details=arr.filter(ph=>ph.presentationRole==='detail'&&ph!==main);
+      const regular=arr.filter(ph=>ph!==main&&ph.presentationRole!=='detail'&&ph.presentationRole!=='technical');
+      const technical=arr.filter(ph=>ph.presentationRole==='technical');
+      if(main)pages.push({id:uid(),layout:'proHero',title:room==='Projeto'?'Imagem principal':room,photoId:main.id,subtitle:'IMAGEM PRINCIPAL'});
+      if(details.length&&regular.length){const d=details.shift(),r=regular.shift();pages.push({id:uid(),layout:'proDetail',title:room==='Projeto'?'Pormenores':room,photoId:r.id,photo2Id:d.id,subtitle:'PORMENOR EM DESTAQUE'});}
+      else if(details.length){const d=details.shift();pages.push({id:uid(),layout:'proHero',title:'Pormenor',photoId:d.id,subtitle:'PORMENOR EM DESTAQUE'});}
+      while(regular.length){const a=regular.shift(),b=regular.shift();pages.push({id:uid(),layout:b?'proDuo':'proHero',title:room==='Projeto'?'Visualização':room,photoId:a?.id||null,photo2Id:b?.id||null,subtitle:b?'DUAS PERSPETIVAS':'VISTA COMPLEMENTAR'});}
+      while(details.length){const a=details.shift(),b=details.shift();pages.push({id:uid(),layout:b?'proDuo':'proHero',title:'Pormenores',photoId:a?.id||null,photo2Id:b?.id||null,subtitle:'DETALHES DO AMBIENTE'});}
+      technical.forEach(ph=>pages.push({id:uid(),layout:'proTechnical',title:room==='Projeto'?'Documento técnico':room,photoId:ph.id,subtitle:'PLANTA / DESENHO TÉCNICO'}));
+    });
+    pages.push({id:uid(),layout:'officialContact',title:'Contactos'});
+    p.pages=pages;p.presentationTemplate='professional';p.presentationTheme='official';p.presentationPreset='official';p.presentationMode='professional';p.presentationObjective=objective;p.presentationGeneratedAt=Date.now();
   }
 
   function autoGeneratePresentation(p,template='official',opts={intro:true,group:false,optimize:true,noRepeat:true,end:true,density:'balanced'}){
@@ -927,6 +974,18 @@
     if(pg.layout==='officialPair'){ctx.fillStyle='#d8d8d8';ctx.fillRect(0,0,1600,900);if(imgs[0])drawContainImage(ctx,imgs[0],55,55,735,790,'#d8d8d8');if(imgs[1])drawContainImage(ctx,imgs[1],930,145,440,620,'#d8d8d8');drawOfficialBrand();return c;}
     if(pg.layout==='officialStrip'){ctx.fillStyle='#d8d8d8';ctx.fillRect(0,0,1600,900);drawOfficialBrand();const ids5=[pg.photoId,pg.photo2Id,pg.photo3Id,pg.photo4Id,pg.photo5Id];const arr=[];for(const id of ids5){const ph=id?photoById(p,id):null;if(ph){try{arr.push(await loadCanvasImage(ph.data));}catch(e){}}}const n=arr.length||1,pad=55,gap=8,totalW=1600-pad*2-gap*(n-1),w=totalW/n;arr.forEach((im,k)=>drawContainImage(ctx,im,pad+k*(w+gap),365,w,370,'#d8d8d8'));ctx.fillStyle='#4e5960';ctx.font='15px Arial';const rights=md.stripRights||'';ctx.fillText(rights,(1600-ctx.measureText(rights).width)/2,835);return c;}
     if(pg.layout==='officialContact'){ctx.fillStyle='#d8d8d8';ctx.fillRect(0,0,1600,900);if(adcImg)ctx.drawImage(adcImg,235,315,190,155);ctx.fillStyle='#2d4149';ctx.font='300 70px Arial';ctx.fillText('Studio',445,415);ctx.fillStyle='#596168';ctx.font='22px Arial';ctx.fillText('by',245,510);if(inter4Img)ctx.drawImage(inter4Img,300,455,330,120);ctx.fillStyle='#465159';ctx.font='24px Arial';let yy=365;for(const line of [co.email,co.phone,co.address,co.website].filter(Boolean)){ctx.fillText(line,760,yy);yy+=42;}const drawP=(name,role,phone,x)=>{let y=560;if(name){ctx.fillStyle='#2d4149';ctx.font='700 25px Arial';ctx.fillText(name,x,y);y+=36;}ctx.fillStyle='#465159';ctx.font='21px Arial';if(role){ctx.fillText(role,x,y);y+=34;}if(phone)ctx.fillText(phone,x,y);};drawP(co.contact1Name,co.contact1Role,co.contact1Phone,760);drawP(co.contact2Name,co.contact2Role,co.contact2Phone,1110);return c;}
+    if(pg.layout==='proHero'){
+      drawOfficialBrand();ctx.fillStyle='#4e5960';ctx.font='16px Arial';ctx.fillText(pg.subtitle||'IMAGEM PRINCIPAL',90,185);ctx.fillStyle='#2d4149';ctx.font='700 38px Arial';wrapCanvasText(ctx,pg.title||'Visualização',90,235,1040,45);if(imgs[0])drawContainImage(ctx,imgs[0],90,285,1420,555,'#d8d8d8');return c;
+    }
+    if(pg.layout==='proDuo'){
+      drawOfficialBrand();ctx.fillStyle='#4e5960';ctx.font='16px Arial';ctx.fillText(pg.subtitle||'DUAS PERSPETIVAS',90,185);ctx.fillStyle='#2d4149';ctx.font='700 38px Arial';wrapCanvasText(ctx,pg.title||'Visualização',90,235,1040,45);if(imgs[0])drawContainImage(ctx,imgs[0],90,300,680,520,'#d8d8d8');if(imgs[1])drawContainImage(ctx,imgs[1],830,300,680,520,'#d8d8d8');return c;
+    }
+    if(pg.layout==='proDetail'){
+      drawOfficialBrand();ctx.fillStyle='#4e5960';ctx.font='16px Arial';ctx.fillText(pg.subtitle||'PORMENOR EM DESTAQUE',90,185);ctx.fillStyle='#2d4149';ctx.font='700 38px Arial';wrapCanvasText(ctx,pg.title||'Pormenores',90,235,1040,45);if(imgs[0])drawContainImage(ctx,imgs[0],90,300,930,520,'#d8d8d8');ctx.fillStyle='#4e5960';ctx.font='700 15px Arial';ctx.fillText('DETALHE',1110,325);if(imgs[1])drawContainImage(ctx,imgs[1],1080,355,430,390,'#d8d8d8');return c;
+    }
+    if(pg.layout==='proTechnical'){
+      drawOfficialBrand();ctx.fillStyle='#4e5960';ctx.font='16px Arial';ctx.fillText(pg.subtitle||'PLANTA / DESENHO TÉCNICO',90,185);ctx.fillStyle='#2d4149';ctx.font='700 34px Arial';wrapCanvasText(ctx,pg.title||'Documento técnico',90,230,1040,42);if(imgs[0])drawContainImage(ctx,imgs[0],90,285,1420,555,'#f3f3f1');return c;
+    }
     ctx.save();ctx.scale(1,.9);
     const drawHeaderTitle=(txt)=>{
       // v2.7: nos modelos alternativos o título começa SEMPRE abaixo da zona do logótipo.
