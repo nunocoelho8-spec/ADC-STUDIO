@@ -747,8 +747,10 @@
       let main=(p.coverPhotoId&&visual.find(x=>x.id===p.coverPhotoId))||visual.find(x=>photoShape(x)==='landscape')||visual[0];
       if(main){main.presentationRole='main';main.includeInPresentation=true;if(!p.coverPhotoId)p.coverPhotoId=main.id;}
       const remaining=visual.filter(x=>x!==main);
-      const detailMax=objective==='client'?2:objective==='project'?2:1;
-      remaining.filter(x=>photoShape(x)!=='landscape').slice(0,detailMax).forEach(x=>x.presentationRole='detail');
+      const detailMax=objective==='client'?1:objective==='project'?2:0;
+      const preferredDetails=remaining.filter(x=>photoShape(x)!=='landscape');
+      const fallbackDetails=remaining.filter(x=>!preferredDetails.includes(x)).slice().reverse();
+      [...preferredDetails,...fallbackDetails].slice(0,detailMax).forEach(x=>x.presentationRole='detail');
       const maxPerRoom=objective==='client'?8:objective==='project'?12:20;
       visual.slice(maxPerRoom).forEach(x=>{if(x.presentationRole==='auto'){x.presentationRole='exclude';x.includeInPresentation=false;}});
     }
@@ -758,6 +760,8 @@
   function professionalPresentationModal(p,initialObjective=null){
     if(!p.photos.length){toast('Adiciona primeiro as imagens do projeto.');return;}
     let objective=initialObjective||p.presentationObjective||'client';
+    let reviewOpen=false;
+    let suggestedOnce=false;
     const render=()=>{
       closeModal();
       const roles={main:0,detail:0,technical:0,exclude:0,auto:0};p.photos.forEach(ph=>roles[ph.presentationRole||'auto']++);
@@ -765,13 +769,14 @@
       const review=p.photos.map(ph=>`<div class="pro-review-row"><img src="${ph.data}" alt=""><div><b>${escapeHtml(ph.room||UNASSIGNED_ROOM)}</b><small>${escapeHtml(ph.name||'Fotografia')}</small></div><select data-pro-role="${ph.id}">${['auto','main','detail','technical','exclude'].map(r=>`<option value="${r}" ${ph.presentationRole===r?'selected':''}>${photoRoleLabel(r)}</option>`).join('')}</select></div>`).join('');
       modal(`<div class="auto-modal-head pro-modal-head"><div><div class="auto-kicker">ADC STUDIO 3.0</div><h3>Criar apresentação profissional</h3><p>Escolhe apenas o objetivo. A identidade visual continua a ser ADC Oficial; a composição muda página a página conforme as imagens.</p></div></div>
         <div class="auto-subtitle">1. Objetivo da apresentação</div><div class="pro-objective-grid">${objectiveCards}</div>
-        <div class="pro-curation-bar"><div><b>2. Curadoria das imagens</b><span>★ ${roles.main} principais &nbsp;•&nbsp; ◎ ${roles.detail} pormenores &nbsp;•&nbsp; ⌑ ${roles.technical} técnicas &nbsp;•&nbsp; × ${roles.exclude} fora</span></div><button class="btn primary" id="suggestCuration">✦ Sugerir seleção profissional</button></div>
-        <details class="pro-review"><summary>Rever / alterar a seleção das imagens</summary><div class="pro-review-list">${review}</div></details>
+        <div class="pro-curation-bar ${suggestedOnce?'suggested':''}"><div><b>2. Curadoria das imagens</b><span>★ ${roles.main} principais &nbsp;•&nbsp; ◎ ${roles.detail} pormenores &nbsp;•&nbsp; ⌑ ${roles.technical} técnicas &nbsp;•&nbsp; × ${roles.exclude} fora</span></div><button class="btn primary" id="suggestCuration">${suggestedOnce?'✓ Sugestão aplicada':'✦ Sugerir seleção profissional'}</button></div>
+        <details class="pro-review" ${reviewOpen?'open':''}><summary>${suggestedOnce?'Seleção sugerida — rever / alterar':'Rever / alterar a seleção das imagens'}</summary><div class="pro-review-list">${review}</div></details>
         <div class="pro-note"><b>Nota:</b> esta versão faz curadoria local, sem enviar fotografias para a Internet. A análise visual por IA poderá ser acrescentada depois como opção.</div>
         <div class="modal-actions auto-modal-actions"><button class="btn" data-close>Cancelar</button><button class="btn" id="confirmProfessional">Criar apresentação</button><button class="btn primary big" id="confirmProfessionalPdf">Criar + PDF</button></div>`);
       qsa('[data-objective]').forEach(b=>b.onclick=()=>{objective=b.dataset.objective;p.presentationObjective=objective;save();render();});
-      qs('#suggestCuration').onclick=()=>{suggestProfessionalRoles(p,objective);render();toast('Seleção profissional sugerida. Podes alterar qualquer imagem.');};
-      qsa('[data-pro-role]').forEach(s=>s.onchange=()=>{const ph=photoById(p,s.dataset.proRole);if(!ph)return;ph.presentationRole=s.value;ph.includeInPresentation=s.value!=='exclude';if(s.value==='main')p.coverPhotoId=ph.id;else if(s.value==='exclude'&&p.coverPhotoId===ph.id)p.coverPhotoId=null;save();render();});
+      const reviewEl=qs('.pro-review');if(reviewEl)reviewEl.addEventListener('toggle',()=>{reviewOpen=reviewEl.open;});
+      qs('#suggestCuration').onclick=()=>{suggestProfessionalRoles(p,objective);suggestedOnce=true;reviewOpen=true;render();toast('Seleção sugerida e aberta para revisão.');};
+      qsa('[data-pro-role]').forEach(s=>s.onchange=()=>{const ph=photoById(p,s.dataset.proRole);if(!ph)return;ph.presentationRole=s.value;ph.includeInPresentation=s.value!=='exclude';if(s.value==='main')p.coverPhotoId=ph.id;else if(s.value==='exclude'&&p.coverPhotoId===ph.id)p.coverPhotoId=null;reviewOpen=true;save();render();});
       const run=async(downloadPdf=false)=>{
         const selected=p.photos.filter(ph=>ph.includeInPresentation!==false&&ph.presentationRole!=='exclude');
         if(!selected.length)return toast('Seleciona pelo menos uma imagem.');
